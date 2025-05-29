@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "hyperlane-plugin-websocket"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "hyperlane",
  "hyperlane-broadcast",
