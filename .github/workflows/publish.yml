@@ -10,6 +10,7 @@ jobs:
     name: Publish to crates.io and GitHub
     runs-on: ubuntu-latest
     environment:
+      name: github
       name: crates-io
     steps:
       - uses: actions/checkout@v4
@@ -42,4 +43,4 @@ jobs:
           name: v${{ steps.get_version.outputs.version }}
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CICD }}
