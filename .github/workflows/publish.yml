@@ -10,7 +10,7 @@ jobs:
     name: Publish to crates.io and GitHub
     runs-on: ubuntu-latest
     environment:
-      name: hyperlane-plugin-websocket
+      name: crates-io
     steps:
       - uses: actions/checkout@v4
       - name: Build
