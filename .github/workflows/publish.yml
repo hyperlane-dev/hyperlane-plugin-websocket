@@ -10,8 +10,7 @@ jobs:
     name: Publish to crates.io and GitHub
     runs-on: ubuntu-latest
     environment:
-      name: github
-      name: crates-io
+      name: ci-cd
     steps:
       - uses: actions/checkout@v4
       - name: Build
