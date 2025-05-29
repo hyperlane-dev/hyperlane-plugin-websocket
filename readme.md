@@ -67,6 +67,12 @@ async fn group_chat(ctx: Context) {
 
 async fn main() {
     let server: Server = Server::new();
+    server.host("0.0.0.0").await;
+    server.port(60000).await;
+    server.enable_nodelay().await;
+    server.disable_linger().await;
+    server.http_line_buffer_size(4096).await;
+    server.websocket_buffer_size(4096).await;
     server.disable_inner_websocket_handle("/:group_name").await;
     server.route("/:group_name", group_chat).await;
     server
