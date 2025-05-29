@@ -1,0 +1,43 @@
+name: Publish Crate and GitHub Release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  publish:
+    name: Publish to crates.io and GitHub
+    runs-on: ubuntu-latest
+    environment:
+      name: hyperlane-plugin-websocket
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --release --verbose
+      - name: Run tests
+        run: RUST_BACKTRACE=1 cargo test --release --verbose -- --nocapture
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Publish to crates.io
+        run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+
+      - name: Get crate version from Cargo.toml
+        id: get_version
+        run: |
+          version=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[0].version')
+          echo "version=$version" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: v${{ steps.get_version.outputs.version }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

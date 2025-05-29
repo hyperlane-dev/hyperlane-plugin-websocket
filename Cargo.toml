@@ -1,0 +1,35 @@
+[package]
+name = "hyperlane-plugin-websocket"
+version = "0.1.0"
+edition = "2024"
+authors = ["root@ltpp.vip"] 
+license = "MIT"
+description = """A websocket plugin for the hyperlane framework."""
+keywords = ["http", "request", "response", "tcp", "redirect"]
+repository = "https://github.com/eastspire/hyperlane-plugin-websocket.git"
+categories = ["network-programming", "web-programming"]
+exclude = [
+    "target",    
+    "Cargo.lock",
+    "sh",
+    ".github"
+]
+
+[dependencies]
+hyperlane = "5.8.0"
+hyperlane-broadcast = "0.5.0"
+lombok-macros = "1.11.4"
+
+[profile.dev]
+incremental = true
+opt-level = 3
+lto = true
+panic = "unwind"
+debug = false
+
+[profile.release]
+incremental = false
+opt-level = 3
+lto = true
+panic = "unwind"
+debug = false
