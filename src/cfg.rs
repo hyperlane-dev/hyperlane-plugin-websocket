@@ -8,10 +8,12 @@ async fn test() {
         BROADCAST_MAP.get_or_init(|| WebSocket::new())
     }
 
-    async fn websocket_callback(ws_ctx: Context) {
+    async fn callback(ws_ctx: Context) {
         let body: RequestBody = ws_ctx.get_request_body().await;
         ws_ctx.set_response_body(body).await;
     }
+
+    async fn send_callback(_: Context) {}
 
     async fn private_chat(ctx: Context) {
         let my_name: String = ctx.get_route_param("my_name").await.unwrap();
@@ -19,8 +21,10 @@ async fn test() {
         get_broadcast_map()
             .run(
                 &ctx,
+                DEFAULT_BUFFER_SIZE,
                 BroadcastType::PointToPoint(&my_name, &your_name),
-                websocket_callback,
+                callback,
+                send_callback,
             )
             .await;
     }
@@ -30,8 +34,10 @@ async fn test() {
         get_broadcast_map()
             .run(
                 &ctx,
+                DEFAULT_BUFFER_SIZE,
                 BroadcastType::PointToGroup(&your_name),
-                websocket_callback,
+                callback,
+                send_callback,
             )
             .await;
     }

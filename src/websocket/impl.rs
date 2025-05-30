@@ -41,14 +41,18 @@ impl WebSocket {
         self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key))
     }
 
-    pub async fn run<'a, F, Fut>(
+    pub async fn run<'a, F1, Fut1, F2, Fut2>(
         &self,
         ctx: &Context,
+        buffer_size: usize,
         broadcast_type: BroadcastType<'a>,
-        callback: F,
+        callback: F1,
+        send_callback: F2,
     ) where
-        F: FuncWithoutPin<Fut>,
-        Fut: Future<Output = ()> + Send + 'static,
+        F1: FuncWithoutPin<Fut1>,
+        Fut1: Future<Output = ()> + Send + 'static,
+        F2: FuncWithoutPin<Fut2>,
+        Fut2: Future<Output = ()> + Send + 'static,
     {
         let mut receiver: Receiver<Vec<u8>> = match broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2),
@@ -57,13 +61,15 @@ impl WebSocket {
         let key: String = BroadcastType::get_key(broadcast_type);
         loop {
             tokio::select! {
-                request_res = ctx.websocket_request_from_stream(100) => {
+                request_res = ctx.websocket_request_from_stream(buffer_size) => {
                     if request_res.is_err() {
                         break;
                     }
                     callback(ctx.clone()).await;
                     let body: ResponseBody = ctx.get_response_body().await;
-                    if self.get_broadcast_map().send(&key, body).is_err() {
+                    let send_res: BroadcastMapSendResult<_> = self.get_broadcast_map().send(&key, body);
+                    send_callback(ctx.clone()).await;
+                    if send_res.is_err() {
                         break;
                     }
                 },
