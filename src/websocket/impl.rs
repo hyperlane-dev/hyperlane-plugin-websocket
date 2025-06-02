@@ -30,7 +30,7 @@ impl WebSocket {
         broadcast_type: BroadcastType,
     ) -> BroadcastMapReceiver<Vec<u8>> {
         let key: String = BroadcastType::get_key(broadcast_type);
-        self.get_broadcast_map().subscribe_unwrap_or_insert(&key)
+        self.broadcast_map.subscribe_unwrap_or_insert(&key)
     }
 
     fn point_to_point(&self, key1: &str, key2: &str) -> BroadcastMapReceiver<Vec<u8>> {
@@ -67,7 +67,7 @@ impl WebSocket {
                     }
                     callback(ctx.clone()).await;
                     let body: ResponseBody = ctx.get_response_body().await;
-                    let send_res: BroadcastMapSendResult<_> = self.get_broadcast_map().send(&key, body);
+                    let send_res: BroadcastMapSendResult<_> = self.broadcast_map.send(&key, body);
                     send_callback(ctx.clone()).await;
                     if send_res.is_err() {
                         break;

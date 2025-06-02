@@ -208,9 +208,9 @@ checksum = "1808d8983c7ca1d289188767327a24d3e6c0c6a741257745fd7fea9f8f7a7635"
 
 [[package]]
 name = "http-type"
-version = "4.10.0"
+version = "4.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69c40d1bcd7d62bd8d7ba3495c77985ba1dd6f83615c07c3c0115ede19471148"
+checksum = "d142300e68e039491f110c0493204474fa357fa92d8e9e609f087707a26074fa"
 dependencies = [
  "dashmap",
  "hex",
@@ -227,9 +227,9 @@ dependencies = [
 
 [[package]]
 name = "hyperlane"
-version = "5.12.0"
+version = "5.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25fcbec5d980f033ad02bdda35109b938944c0465ddd983a05a8890e07afe3a8"
+checksum = "58eb5f8a727becef89e5c610188075a3d296d9950b7297f353b87eeb0465b257"
 dependencies = [
  "http-type",
  "lombok-macros",
@@ -239,22 +239,20 @@ dependencies = [
 
 [[package]]
 name = "hyperlane-broadcast"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d10d26d30398580d6e5535a1f706507aeaa069a30f9959b5299dc066a112a396"
+checksum = "7764d7256c4a54e929d2d82176108a718b2493ec982b353e382971b1fa02707e"
 dependencies = [
  "dashmap",
- "lombok-macros",
  "tokio",
 ]
 
 [[package]]
 name = "hyperlane-plugin-websocket"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "hyperlane",
  "hyperlane-broadcast",
- "lombok-macros",
 ]
 
 [[package]]
@@ -400,9 +398,9 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
 name = "lombok-macros"
-version = "1.11.4"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10cee2ce690915c2b491c9ea0d2d8e3daa3e30bcc55cc15fd9297b2566c4522e"
+checksum = "009c79e9d87f8b0a79b8350fc03ffeb9d4cefd632c47c3b7ea1f2fba72d70ade"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -618,9 +616,9 @@ dependencies = [
 
 [[package]]
 name = "serde-xml-rs"
-version = "0.8.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "176b7ff880ab6ead7a020e773e9c096467fe347615a3e22ac29300cbdef67a5d"
+checksum = "53630160a98edebde0123eb4dfd0fce6adff091b2305db3154a9e920206eb510"
 dependencies = [
  "log",
  "serde",
