@@ -41,6 +41,11 @@ impl WebSocket {
         self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key))
     }
 
+    pub fn receiver_count<'a>(&self, broadcast_type: BroadcastType<'a>) -> OptionReceiverCount {
+        let key: String = BroadcastType::get_key(broadcast_type);
+        self.broadcast_map.receiver_count(&key)
+    }
+
     pub async fn run<'a, F1, Fut1, F2, Fut2>(
         &self,
         ctx: &Context,
@@ -59,6 +64,10 @@ impl WebSocket {
             BroadcastType::PointToGroup(key) => self.point_to_group(key),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
+        let result_handle = || async {
+            ctx.aborted().await;
+            ctx.closed().await;
+        };
         loop {
             tokio::select! {
                 request_res = ctx.websocket_request_from_stream(buffer_size) => {
@@ -82,5 +91,6 @@ impl WebSocket {
                }
             }
         }
+        result_handle().await;
     }
 }
