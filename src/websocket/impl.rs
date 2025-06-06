@@ -46,6 +46,14 @@ impl WebSocket {
         self.broadcast_map.receiver_count(&key)
     }
 
+    pub fn pre_decrement_receiver_count<'a>(
+        &self,
+        broadcast_type: BroadcastType<'a>,
+    ) -> OptionReceiverCount {
+        self.receiver_count(broadcast_type)
+            .map(|count| (count - 1).max(0))
+    }
+
     pub async fn run<'a, F1, Fut1, F2, Fut2, F3, Fut3>(
         &self,
         ctx: &Context,
