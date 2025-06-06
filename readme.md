@@ -38,8 +38,13 @@ fn get_broadcast_map() -> &'static WebSocket {
 }
 
 async fn callback(ws_ctx: Context) {
+    let group_name: String = ws_ctx.get_route_param("group_name").await.unwrap();
+    let receiver_count: OptionReceiverCount =
+        get_broadcast_map().receiver_count(BroadcastType::PointToGroup(&group_name));
     let body: RequestBody = ws_ctx.get_request_body().await;
     ws_ctx.set_response_body(body).await;
+    println!("receiver_count => {:?}", receiver_count);
+    let _ = std::io::Write::flush(&mut std::io::stderr());
 }
 
 async fn send_callback(_: Context) {}
@@ -80,12 +85,12 @@ async fn main() {
     server.disable_linger().await;
     server.http_line_buffer_size(4096).await;
     server.websocket_buffer_size(4096).await;
-    server.disable_inner_websocket_handle("/:group_name").await;
-    server.route("/:group_name", group_chat).await;
+    server.disable_inner_websocket_handle("/{group_name}").await;
+    server.route("/{group_name}", group_chat).await;
     server
-        .disable_inner_websocket_handle("/:my_name/:your_name")
+        .disable_inner_websocket_handle("/{my_name}/{your_name}")
         .await;
-    server.route("/:my_name/:your_name", private_chat).await;
+    server.route("/{my_name}/{your_name}", private_chat).await;
     server.run().await.unwrap();
 }
 ```
