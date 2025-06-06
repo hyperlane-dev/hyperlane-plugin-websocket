@@ -46,18 +46,21 @@ impl WebSocket {
         self.broadcast_map.receiver_count(&key)
     }
 
-    pub async fn run<'a, F1, Fut1, F2, Fut2>(
+    pub async fn run<'a, F1, Fut1, F2, Fut2, F3, Fut3>(
         &self,
         ctx: &Context,
         buffer_size: usize,
         broadcast_type: BroadcastType<'a>,
         callback: F1,
         send_callback: F2,
+        client_closed_callback: F3,
     ) where
         F1: FuncWithoutPin<Fut1>,
         Fut1: Future<Output = ()> + Send + 'static,
         F2: FuncWithoutPin<Fut2>,
         Fut2: Future<Output = ()> + Send + 'static,
+        F3: FuncWithoutPin<Fut3>,
+        Fut3: Future<Output = ()> + Send + 'static,
     {
         let mut receiver: Receiver<Vec<u8>> = match broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2),
@@ -72,6 +75,9 @@ impl WebSocket {
             tokio::select! {
                 request_res = ctx.websocket_request_from_stream(buffer_size) => {
                     if request_res.is_err() {
+                        if let Err(RequestError::ClientClosedConnection) = request_res {
+                            client_closed_callback(ctx.clone()).await;
+                        }
                         break;
                     }
                     callback(ctx.clone()).await;
