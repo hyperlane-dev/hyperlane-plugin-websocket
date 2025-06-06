@@ -59,6 +59,7 @@ async fn private_chat(ctx: Context) {
             BroadcastType::PointToPoint(&my_name, &your_name),
             callback,
             send_callback,
+            callback,
         )
         .await;
 }
@@ -72,6 +73,7 @@ async fn group_chat(ctx: Context) {
             BroadcastType::PointToGroup(&your_name),
             callback,
             send_callback,
+            callback,
         )
         .await;
 }

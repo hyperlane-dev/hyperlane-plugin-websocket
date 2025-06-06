@@ -20,10 +20,6 @@ async fn test() {
 
     async fn send_callback(_: Context) {}
 
-    async fn client_closed_callback(ctx: Context) {
-        callback(ctx).await;
-    }
-
     async fn private_chat(ctx: Context) {
         let my_name: String = ctx.get_route_param("my_name").await.unwrap();
         let your_name: String = ctx.get_route_param("your_name").await.unwrap();
@@ -34,7 +30,7 @@ async fn test() {
                 BroadcastType::PointToPoint(&my_name, &your_name),
                 callback,
                 send_callback,
-                client_closed_callback,
+                callback,
             )
             .await;
     }
@@ -48,7 +44,7 @@ async fn test() {
                 BroadcastType::PointToGroup(&your_name),
                 callback,
                 send_callback,
-                client_closed_callback,
+                callback,
             )
             .await;
     }
