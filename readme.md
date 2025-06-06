@@ -41,7 +41,10 @@ async fn callback(ws_ctx: Context) {
     let group_name: String = ws_ctx.get_route_param("group_name").await.unwrap();
     let receiver_count: OptionReceiverCount =
         get_broadcast_map().receiver_count(BroadcastType::PointToGroup(&group_name));
-    let body: RequestBody = ws_ctx.get_request_body().await;
+    let mut body: RequestBody = ws_ctx.get_request_body().await;
+    if body.is_empty() {
+        body = format!("receiver_count => {:?}", receiver_count).into();
+    }
     ws_ctx.set_response_body(body).await;
     println!("receiver_count => {:?}", receiver_count);
     let _ = std::io::Write::flush(&mut std::io::stderr());

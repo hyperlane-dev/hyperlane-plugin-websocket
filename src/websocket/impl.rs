@@ -74,17 +74,16 @@ impl WebSocket {
         loop {
             tokio::select! {
                 request_res = ctx.websocket_request_from_stream(buffer_size) => {
+                    let mut need_break = false;
                     if request_res.is_err() {
-                        if let Err(RequestError::ClientClosedConnection) = request_res {
-                            client_closed_callback(ctx.clone()).await;
-                        }
-                        break;
+                        need_break = true;
+                        client_closed_callback(ctx.clone()).await;
                     }
                     callback(ctx.clone()).await;
                     let body: ResponseBody = ctx.get_response_body().await;
                     let send_res: BroadcastMapSendResult<_> = self.broadcast_map.send(&key, body);
                     send_callback(ctx.clone()).await;
-                    if send_res.is_err() {
+                    if need_break || send_res.is_err() {
                         break;
                     }
                 },
