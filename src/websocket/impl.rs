@@ -54,6 +54,18 @@ impl WebSocket {
             .map(|count| (count - 1).max(0))
     }
 
+    pub fn send<'a, T>(
+        &self,
+        broadcast_type: BroadcastType<'a>,
+        data: T,
+    ) -> BroadcastMapSendResult<Vec<u8>>
+    where
+        T: Into<Vec<u8>>,
+    {
+        let key: String = BroadcastType::get_key(broadcast_type);
+        self.broadcast_map.send(&key, data.into())
+    }
+
     pub async fn run<'a, F1, Fut1, F2, Fut2, F3, Fut3>(
         &self,
         ctx: &Context,
