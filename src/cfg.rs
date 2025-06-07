@@ -14,8 +14,8 @@ async fn test() {
             let broadcast_type: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
             let receiver_count: OptionReceiverCount =
                 get_broadcast_map().receiver_count(broadcast_type);
-            let body: String = format!("receiver_count => {:?}", receiver_count).into();
-            get_broadcast_map().send(broadcast_type, body).unwrap();
+            let data: String = format!("receiver_count => {:?}", receiver_count).into();
+            get_broadcast_map().send(broadcast_type, data).unwrap();
             println!("[on_ws_connected]receiver_count => {:?}", receiver_count);
             let _ = std::io::Write::flush(&mut std::io::stderr());
         });
