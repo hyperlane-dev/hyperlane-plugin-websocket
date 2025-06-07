@@ -95,11 +95,12 @@ impl WebSocket {
             tokio::select! {
                 request_res = ctx.ws_request_from_stream(buffer_size) => {
                     let mut need_break = false;
-                    if request_res.is_err() {
+                    if request_res.is_ok() {
+                        request_handler(ctx.clone()).await;
+                    } else {
                         need_break = true;
                         on_client_closed(ctx.clone()).await;
                     }
-                    request_handler(ctx.clone()).await;
                     let body: ResponseBody = ctx.get_response_body().await;
                     let send_res: BroadcastMapSendResult<_> = self.broadcast_map.send(&key, body);
                     on_sended(ctx.clone()).await;
@@ -112,6 +113,8 @@ impl WebSocket {
                         if ctx.send_response_body(msg).await.is_err() || ctx.flush().await.is_err() {
                             break;
                         }
+                    } else {
+                        break;
                     }
                }
             }
