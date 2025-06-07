@@ -59,9 +59,9 @@ impl WebSocket {
         ctx: &Context,
         buffer_size: usize,
         broadcast_type: BroadcastType<'a>,
-        callback: F1,
-        send_callback: F2,
-        client_closed_callback: F3,
+        request_handler: F1,
+        on_sended: F2,
+        on_client_closed: F3,
     ) where
         F1: FuncWithoutPin<Fut1>,
         Fut1: Future<Output = ()> + Send + 'static,
@@ -81,16 +81,16 @@ impl WebSocket {
         };
         loop {
             tokio::select! {
-                request_res = ctx.websocket_request_from_stream(buffer_size) => {
+                request_res = ctx.ws_request_from_stream(buffer_size) => {
                     let mut need_break = false;
                     if request_res.is_err() {
                         need_break = true;
-                        client_closed_callback(ctx.clone()).await;
+                        on_client_closed(ctx.clone()).await;
                     }
-                    callback(ctx.clone()).await;
+                    request_handler(ctx.clone()).await;
                     let body: ResponseBody = ctx.get_response_body().await;
                     let send_res: BroadcastMapSendResult<_> = self.broadcast_map.send(&key, body);
-                    send_callback(ctx.clone()).await;
+                    on_sended(ctx.clone()).await;
                     if need_break || send_res.is_err() {
                         break;
                     }

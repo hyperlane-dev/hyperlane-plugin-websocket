@@ -37,6 +37,18 @@ fn get_broadcast_map() -> &'static WebSocket {
     BROADCAST_MAP.get_or_init(|| WebSocket::new())
 }
 
+async fn on_ws_connected(ctx: Context) {
+    tokio::spawn(async move {
+        let group_name: String = ctx.get_route_param("group_name").await.unwrap();
+        let receiver_count: OptionReceiverCount =
+            get_broadcast_map().receiver_count(BroadcastType::PointToGroup(&group_name));
+        let body: String = format!("receiver_count => {:?}", receiver_count).into();
+        ctx.set_response_body(body).await;
+        println!("receiver_count => {:?}", receiver_count);
+        let _ = std::io::Write::flush(&mut std::io::stderr());
+    });
+}
+
 async fn callback(ws_ctx: Context) {
     let group_name: String = ws_ctx.get_route_param("group_name").await.unwrap();
     let mut receiver_count: OptionReceiverCount =
@@ -52,7 +64,7 @@ async fn callback(ws_ctx: Context) {
     let _ = std::io::Write::flush(&mut std::io::stderr());
 }
 
-async fn send_callback(_: Context) {}
+async fn on_sended(_: Context) {}
 
 async fn private_chat(ctx: Context) {
     let my_name: String = ctx.get_route_param("my_name").await.unwrap();
@@ -63,7 +75,7 @@ async fn private_chat(ctx: Context) {
             DEFAULT_BUFFER_SIZE,
             BroadcastType::PointToPoint(&my_name, &your_name),
             callback,
-            send_callback,
+            on_sended,
             callback,
         )
         .await;
@@ -77,7 +89,7 @@ async fn group_chat(ctx: Context) {
             DEFAULT_BUFFER_SIZE,
             BroadcastType::PointToGroup(&your_name),
             callback,
-            send_callback,
+            on_sended,
             callback,
         )
         .await;
@@ -91,13 +103,14 @@ async fn main() {
     server.enable_nodelay().await;
     server.disable_linger().await;
     server.http_line_buffer_size(4096).await;
-    server.websocket_buffer_size(4096).await;
-    server.disable_inner_websocket_handle("/{group_name}").await;
+    server.ws_buffer_size(4096).await;
+    server.disable_internal_ws_handler("/{group_name}").await;
     server.route("/{group_name}", group_chat).await;
     server
-        .disable_inner_websocket_handle("/{my_name}/{your_name}")
+        .disable_internal_ws_handler("/{my_name}/{your_name}")
         .await;
     server.route("/{my_name}/{your_name}", private_chat).await;
+    server.on_ws_connected(on_ws_connected).await;
     server.run().await.unwrap();
 }
 ```
