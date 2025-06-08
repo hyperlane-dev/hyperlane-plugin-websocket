@@ -41,17 +41,25 @@ impl WebSocket {
         self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key))
     }
 
-    pub fn receiver_count<'a>(&self, broadcast_type: BroadcastType<'a>) -> OptionReceiverCount {
+    pub fn receiver_count<'a>(&self, broadcast_type: BroadcastType<'a>) -> ReceiverCount {
         let key: String = BroadcastType::get_key(broadcast_type);
-        self.broadcast_map.receiver_count(&key)
+        self.broadcast_map.receiver_count(&key).unwrap_or(0)
     }
 
-    pub fn pre_decrement_receiver_count<'a>(
+    pub fn receiver_count_after_increment<'a>(
         &self,
         broadcast_type: BroadcastType<'a>,
-    ) -> OptionReceiverCount {
-        self.receiver_count(broadcast_type)
-            .map(|count| (count - 1).max(0))
+    ) -> ReceiverCount {
+        let count: ReceiverCount = self.receiver_count(broadcast_type);
+        count.max(0).min(ReceiverCount::MAX - 1) + 1
+    }
+
+    pub fn receiver_count_after_decrement<'a>(
+        &self,
+        broadcast_type: BroadcastType<'a>,
+    ) -> ReceiverCount {
+        let count: ReceiverCount = self.receiver_count(broadcast_type);
+        count.max(1).min(ReceiverCount::MAX) - 1
     }
 
     pub fn send<'a, T>(

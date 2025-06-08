@@ -9,25 +9,28 @@ async fn test() {
     }
 
     async fn on_ws_connected(ctx: Context) {
-        tokio::spawn(async move {
-            let group_name: String = ctx.get_route_param("group_name").await.unwrap();
-            let broadcast_type: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
-            let receiver_count: OptionReceiverCount =
-                get_broadcast_map().receiver_count(broadcast_type);
-            let data: String = format!("receiver_count => {:?}", receiver_count).into();
-            get_broadcast_map().send(broadcast_type, data).unwrap();
-            println!("[on_ws_connected]receiver_count => {:?}", receiver_count);
-            let _ = std::io::Write::flush(&mut std::io::stderr());
-        });
+        let group_name: String = ctx.get_route_param("group_name").await.unwrap();
+        let broadcast_type: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
+        let receiver_count: ReceiverCount =
+            get_broadcast_map().receiver_count_after_increment(broadcast_type);
+        let data: String = format!("receiver_count => {:?}", receiver_count).into();
+        get_broadcast_map()
+            .send(broadcast_type, data)
+            .unwrap_or_else(|err| {
+                println!("[on_ws_connected]send error => {:?}", err.to_string());
+                None
+            });
+        println!("[on_ws_connected]receiver_count => {:?}", receiver_count);
+        let _ = std::io::Write::flush(&mut std::io::stderr());
     }
 
     async fn group_chat(ws_ctx: Context) {
         let group_name: String = ws_ctx.get_route_param("group_name").await.unwrap();
         let key: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
-        let mut receiver_count: OptionReceiverCount = get_broadcast_map().receiver_count(key);
+        let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key);
         let mut body: RequestBody = ws_ctx.get_request_body().await;
         if body.is_empty() {
-            receiver_count = get_broadcast_map().pre_decrement_receiver_count(key);
+            receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
             body = format!("receiver_count => {:?}", receiver_count).into();
         }
         ws_ctx.set_response_body(body).await;
@@ -38,8 +41,7 @@ async fn test() {
     async fn group_closed(ctx: Context) {
         let group_name: String = ctx.get_route_param("group_name").await.unwrap();
         let key: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
-        let receiver_count: OptionReceiverCount =
-            get_broadcast_map().pre_decrement_receiver_count(key);
+        let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_decrement(key);
         let body: String = format!("receiver_count => {:?}", receiver_count);
         ctx.set_response_body(body).await;
         println!("[group_closed]receiver_count => {:?}", receiver_count);
@@ -50,10 +52,10 @@ async fn test() {
         let my_name: String = ctx.get_route_param("my_name").await.unwrap();
         let your_name: String = ctx.get_route_param("your_name").await.unwrap();
         let key: BroadcastType<'_> = BroadcastType::PointToPoint(&my_name, &your_name);
-        let mut receiver_count: OptionReceiverCount = get_broadcast_map().receiver_count(key);
+        let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key);
         let mut body: RequestBody = ctx.get_request_body().await;
         if body.is_empty() {
-            receiver_count = get_broadcast_map().pre_decrement_receiver_count(key);
+            receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
             body = format!("receiver_count => {:?}", receiver_count).into();
         }
         ctx.set_response_body(body).await;
@@ -65,8 +67,7 @@ async fn test() {
         let my_name: String = ctx.get_route_param("my_name").await.unwrap();
         let your_name: String = ctx.get_route_param("your_name").await.unwrap();
         let key: BroadcastType<'_> = BroadcastType::PointToPoint(&my_name, &your_name);
-        let receiver_count: OptionReceiverCount =
-            get_broadcast_map().pre_decrement_receiver_count(key);
+        let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_decrement(key);
         let body: String = format!("receiver_count => {:?}", receiver_count);
         ctx.set_response_body(body).await;
         println!("[private_closed]receiver_count => {:?}", receiver_count);
