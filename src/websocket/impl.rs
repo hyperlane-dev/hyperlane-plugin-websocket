@@ -118,7 +118,7 @@ impl WebSocket {
                 },
                 msg_res = receiver.recv() => {
                     if let Ok(msg) = msg_res {
-                        if ctx.send_response_body(msg).await.is_err() || ctx.flush().await.is_err() {
+                        if ctx.set_response_body(msg).await.send_body().await.is_err() {
                             break;
                         }
                     } else {
