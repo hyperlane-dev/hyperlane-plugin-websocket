@@ -1,3 +1,1 @@
-use crate::*;
-
-pub trait BroadcastTypeTrait: ToString + PartialOrd + Display + Clone {}
+pub trait BroadcastTypeTrait: ToString + PartialOrd + Clone {}

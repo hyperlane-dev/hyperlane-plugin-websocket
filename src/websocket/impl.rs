@@ -1,5 +1,41 @@
 use crate::*;
 
+impl BroadcastTypeTrait for String {}
+impl BroadcastTypeTrait for &str {}
+impl BroadcastTypeTrait for char {}
+impl BroadcastTypeTrait for bool {}
+impl BroadcastTypeTrait for i8 {}
+impl BroadcastTypeTrait for i16 {}
+impl BroadcastTypeTrait for i32 {}
+impl BroadcastTypeTrait for i64 {}
+impl BroadcastTypeTrait for i128 {}
+impl BroadcastTypeTrait for isize {}
+impl BroadcastTypeTrait for u8 {}
+impl BroadcastTypeTrait for u16 {}
+impl BroadcastTypeTrait for u32 {}
+impl BroadcastTypeTrait for u64 {}
+impl BroadcastTypeTrait for u128 {}
+impl BroadcastTypeTrait for usize {}
+impl BroadcastTypeTrait for f32 {}
+impl BroadcastTypeTrait for f64 {}
+impl BroadcastTypeTrait for IpAddr {}
+impl BroadcastTypeTrait for Ipv4Addr {}
+impl BroadcastTypeTrait for Ipv6Addr {}
+impl BroadcastTypeTrait for SocketAddr {}
+impl BroadcastTypeTrait for NonZeroU8 {}
+impl BroadcastTypeTrait for NonZeroU16 {}
+impl BroadcastTypeTrait for NonZeroU32 {}
+impl BroadcastTypeTrait for NonZeroU64 {}
+impl BroadcastTypeTrait for NonZeroU128 {}
+impl BroadcastTypeTrait for NonZeroUsize {}
+impl BroadcastTypeTrait for NonZeroI8 {}
+impl BroadcastTypeTrait for NonZeroI16 {}
+impl BroadcastTypeTrait for NonZeroI32 {}
+impl BroadcastTypeTrait for NonZeroI64 {}
+impl BroadcastTypeTrait for NonZeroI128 {}
+impl BroadcastTypeTrait for NonZeroIsize {}
+impl BroadcastTypeTrait for Infallible {}
+
 impl<B: BroadcastTypeTrait> BroadcastType<B> {
     pub fn get_key(broadcast_type: BroadcastType<B>) -> String {
         match broadcast_type {
@@ -9,10 +45,15 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
                 } else {
                     (key2, key1)
                 };
-                format!("{}-{}-{}", POINT_TO_POINT_KEY, first_key, second_key)
+                format!(
+                    "{}-{}-{}",
+                    POINT_TO_POINT_KEY,
+                    first_key.to_string(),
+                    second_key.to_string()
+                )
             }
             BroadcastType::PointToGroup(key) => {
-                format!("{}-{}", POINT_TO_GROUP_KEY, key)
+                format!("{}-{}", POINT_TO_GROUP_KEY, key.to_string())
             }
         }
     }
@@ -103,7 +144,7 @@ impl WebSocket {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2),
             BroadcastType::PointToGroup(key) => self.point_to_group(key),
         };
-        let key: String = BroadcastType::get_key(broadcast_type);
+        let key = BroadcastType::get_key(broadcast_type);
         let result_handle = || async {
             ctx.aborted().await;
             ctx.closed().await;

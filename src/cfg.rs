@@ -4,9 +4,6 @@ use crate::*;
 async fn test() {
     static BROADCAST_MAP: OnceLock<WebSocket> = OnceLock::new();
 
-    #[allow(non_local_definitions)]
-    impl BroadcastTypeTrait for &str {}
-
     fn get_broadcast_map() -> &'static WebSocket {
         BROADCAST_MAP.get_or_init(|| WebSocket::new())
     }
