@@ -1,7 +1,7 @@
 use crate::*;
 
-impl<'a> BroadcastType<'a> {
-    pub fn get_key(broadcast_type: BroadcastType) -> String {
+impl<B: BroadcastTypeTrait> BroadcastType<B> {
+    pub fn get_key(broadcast_type: BroadcastType<B>) -> String {
         match broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => {
                 let (first_key, second_key) = if key1 <= key2 {
@@ -25,60 +25,68 @@ impl WebSocket {
         }
     }
 
-    fn subscribe_unwrap_or_insert(
+    fn subscribe_unwrap_or_insert<B: BroadcastTypeTrait>(
         &self,
-        broadcast_type: BroadcastType,
+        broadcast_type: BroadcastType<B>,
     ) -> BroadcastMapReceiver<Vec<u8>> {
         let key: String = BroadcastType::get_key(broadcast_type);
         self.broadcast_map.subscribe_unwrap_or_insert(&key)
     }
 
-    fn point_to_point(&self, key1: &str, key2: &str) -> BroadcastMapReceiver<Vec<u8>> {
-        self.subscribe_unwrap_or_insert(BroadcastType::PointToPoint(key1, key2))
+    fn point_to_point<B: BroadcastTypeTrait>(
+        &self,
+        key1: &B,
+        key2: &B,
+    ) -> BroadcastMapReceiver<Vec<u8>> {
+        self.subscribe_unwrap_or_insert(BroadcastType::PointToPoint(key1.clone(), key2.clone()))
     }
 
-    fn point_to_group(&self, key: &str) -> BroadcastMapReceiver<Vec<u8>> {
-        self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key))
+    fn point_to_group<B: BroadcastTypeTrait>(&self, key: &B) -> BroadcastMapReceiver<Vec<u8>> {
+        self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key.clone()))
     }
 
-    pub fn receiver_count<'a>(&self, broadcast_type: BroadcastType<'a>) -> ReceiverCount {
+    pub fn receiver_count<'a, B: BroadcastTypeTrait>(
+        &self,
+        broadcast_type: BroadcastType<B>,
+    ) -> ReceiverCount {
         let key: String = BroadcastType::get_key(broadcast_type);
         self.broadcast_map.receiver_count(&key).unwrap_or(0)
     }
 
-    pub fn receiver_count_after_increment<'a>(
+    pub fn receiver_count_after_increment<B: BroadcastTypeTrait>(
         &self,
-        broadcast_type: BroadcastType<'a>,
+        broadcast_type: BroadcastType<B>,
     ) -> ReceiverCount {
         let count: ReceiverCount = self.receiver_count(broadcast_type);
         count.max(0).min(ReceiverCount::MAX - 1) + 1
     }
 
-    pub fn receiver_count_after_decrement<'a>(
+    pub fn receiver_count_after_decrement<B: BroadcastTypeTrait>(
         &self,
-        broadcast_type: BroadcastType<'a>,
+        broadcast_type: BroadcastType<B>,
     ) -> ReceiverCount {
         let count: ReceiverCount = self.receiver_count(broadcast_type);
         count.max(1).min(ReceiverCount::MAX) - 1
     }
 
-    pub fn send<'a, T>(
+    pub fn send<T, B>(
         &self,
-        broadcast_type: BroadcastType<'a>,
+        broadcast_type: BroadcastType<B>,
         data: T,
     ) -> BroadcastMapSendResult<Vec<u8>>
     where
         T: Into<Vec<u8>>,
+        B: BroadcastTypeTrait,
     {
         let key: String = BroadcastType::get_key(broadcast_type);
         self.broadcast_map.send(&key, data.into())
     }
 
-    pub async fn run<'a, F1, Fut1, F2, Fut2, F3, Fut3>(
+    pub async fn run<'a, F1, Fut1, F2, Fut2, F3, Fut3, B>(
         &self,
         ctx: &Context,
         buffer_size: usize,
-        broadcast_type: BroadcastType<'a>,
+        broadcast_type: BroadcastType<B>,
         request_handler: F1,
         on_sended: F2,
         on_client_closed: F3,
@@ -89,8 +97,9 @@ impl WebSocket {
         Fut2: Future<Output = ()> + Send + 'static,
         F3: FuncWithoutPin<Fut3>,
         Fut3: Future<Output = ()> + Send + 'static,
+        B: BroadcastTypeTrait,
     {
-        let mut receiver: Receiver<Vec<u8>> = match broadcast_type {
+        let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2),
             BroadcastType::PointToGroup(key) => self.point_to_group(key),
         };

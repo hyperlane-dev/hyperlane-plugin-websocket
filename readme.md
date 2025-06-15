@@ -32,13 +32,16 @@ use hyperlane_plugin_websocket::*;
 
 static BROADCAST_MAP: OnceLock<WebSocket> = OnceLock::new();
 
+#[allow(non_local_definitions)]
+impl BroadcastTypeTrait for &str {}
+
 fn get_broadcast_map() -> &'static WebSocket {
     BROADCAST_MAP.get_or_init(|| WebSocket::new())
 }
 
 async fn on_ws_connected(ctx: Context) {
     let group_name: String = ctx.get_route_param("group_name").await.unwrap();
-    let broadcast_type: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
+    let broadcast_type: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
     let receiver_count: ReceiverCount =
         get_broadcast_map().receiver_count_after_increment(broadcast_type);
     let data: String = format!("receiver_count => {:?}", receiver_count).into();
@@ -54,7 +57,7 @@ async fn on_ws_connected(ctx: Context) {
 
 async fn group_chat(ws_ctx: Context) {
     let group_name: String = ws_ctx.get_route_param("group_name").await.unwrap();
-    let key: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
+    let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
     let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key);
     let mut body: RequestBody = ws_ctx.get_request_body().await;
     if body.is_empty() {
@@ -68,7 +71,7 @@ async fn group_chat(ws_ctx: Context) {
 
 async fn group_closed(ctx: Context) {
     let group_name: String = ctx.get_route_param("group_name").await.unwrap();
-    let key: BroadcastType<'_> = BroadcastType::PointToGroup(&group_name);
+    let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
     let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_decrement(key);
     let body: String = format!("receiver_count => {:?}", receiver_count);
     ctx.set_response_body(body).await;
@@ -79,7 +82,7 @@ async fn group_closed(ctx: Context) {
 async fn private_chat(ctx: Context) {
     let my_name: String = ctx.get_route_param("my_name").await.unwrap();
     let your_name: String = ctx.get_route_param("your_name").await.unwrap();
-    let key: BroadcastType<'_> = BroadcastType::PointToPoint(&my_name, &your_name);
+    let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
     let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key);
     let mut body: RequestBody = ctx.get_request_body().await;
     if body.is_empty() {
@@ -94,7 +97,7 @@ async fn private_chat(ctx: Context) {
 async fn private_closed(ctx: Context) {
     let my_name: String = ctx.get_route_param("my_name").await.unwrap();
     let your_name: String = ctx.get_route_param("your_name").await.unwrap();
-    let key: BroadcastType<'_> = BroadcastType::PointToPoint(&my_name, &your_name);
+    let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
     let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_decrement(key);
     let body: String = format!("receiver_count => {:?}", receiver_count);
     ctx.set_response_body(body).await;
@@ -111,7 +114,7 @@ async fn sended(ctx: Context) {
 async fn private_chat_route(ctx: Context) {
     let my_name: String = ctx.get_route_param("my_name").await.unwrap();
     let your_name: String = ctx.get_route_param("your_name").await.unwrap();
-    let key: BroadcastType<'_> = BroadcastType::PointToPoint(&my_name, &your_name);
+    let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
     get_broadcast_map()
         .run(&ctx, 1024, key, private_chat, sended, private_closed)
         .await;
@@ -119,12 +122,13 @@ async fn private_chat_route(ctx: Context) {
 
 async fn group_chat_route(ctx: Context) {
     let your_name: String = ctx.get_route_param("group_name").await.unwrap();
-    let key: BroadcastType<'_> = BroadcastType::PointToGroup(&your_name);
+    let key: BroadcastType<&str> = BroadcastType::PointToGroup(&your_name);
     get_broadcast_map()
         .run(&ctx, 1024, key, group_chat, sended, group_closed)
         .await;
 }
 
+#[tokio::main]
 async fn main() {
     let server: Server = Server::new();
     server.host("0.0.0.0").await;

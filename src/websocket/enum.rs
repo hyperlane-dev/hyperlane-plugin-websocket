@@ -1,5 +1,7 @@
+use crate::*;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum BroadcastType<'a> {
-    PointToPoint(&'a str, &'a str),
-    PointToGroup(&'a str),
+pub enum BroadcastType<T: BroadcastTypeTrait> {
+    PointToPoint(T, T),
+    PointToGroup(T),
 }
