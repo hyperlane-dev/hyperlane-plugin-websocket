@@ -1,9 +1,9 @@
 pub(crate) mod cfg;
 pub(crate) mod websocket;
 
-pub use websocket::{r#enum::*, r#struct::*, r#trait::*};
+pub use websocket::{r#enum::*, r#struct::*};
 
-pub(crate) use websocket::r#const::*;
+pub(crate) use websocket::{r#const::*, r#trait::*};
 
 pub(crate) use std::{
     convert::Infallible,
