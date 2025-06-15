@@ -36,6 +36,42 @@ impl BroadcastTypeTrait for NonZeroI128 {}
 impl BroadcastTypeTrait for NonZeroIsize {}
 impl BroadcastTypeTrait for Infallible {}
 
+impl BroadcastTypeTrait for &String {}
+impl BroadcastTypeTrait for &&str {}
+impl BroadcastTypeTrait for &char {}
+impl BroadcastTypeTrait for &bool {}
+impl BroadcastTypeTrait for &i8 {}
+impl BroadcastTypeTrait for &i16 {}
+impl BroadcastTypeTrait for &i32 {}
+impl BroadcastTypeTrait for &i64 {}
+impl BroadcastTypeTrait for &i128 {}
+impl BroadcastTypeTrait for &isize {}
+impl BroadcastTypeTrait for &u8 {}
+impl BroadcastTypeTrait for &u16 {}
+impl BroadcastTypeTrait for &u32 {}
+impl BroadcastTypeTrait for &u64 {}
+impl BroadcastTypeTrait for &u128 {}
+impl BroadcastTypeTrait for &usize {}
+impl BroadcastTypeTrait for &f32 {}
+impl BroadcastTypeTrait for &f64 {}
+impl BroadcastTypeTrait for &IpAddr {}
+impl BroadcastTypeTrait for &Ipv4Addr {}
+impl BroadcastTypeTrait for &Ipv6Addr {}
+impl BroadcastTypeTrait for &SocketAddr {}
+impl BroadcastTypeTrait for &NonZeroU8 {}
+impl BroadcastTypeTrait for &NonZeroU16 {}
+impl BroadcastTypeTrait for &NonZeroU32 {}
+impl BroadcastTypeTrait for &NonZeroU64 {}
+impl BroadcastTypeTrait for &NonZeroU128 {}
+impl BroadcastTypeTrait for &NonZeroUsize {}
+impl BroadcastTypeTrait for &NonZeroI8 {}
+impl BroadcastTypeTrait for &NonZeroI16 {}
+impl BroadcastTypeTrait for &NonZeroI32 {}
+impl BroadcastTypeTrait for &NonZeroI64 {}
+impl BroadcastTypeTrait for &NonZeroI128 {}
+impl BroadcastTypeTrait for &NonZeroIsize {}
+impl BroadcastTypeTrait for &Infallible {}
+
 impl<B: BroadcastTypeTrait> BroadcastType<B> {
     pub fn get_key(broadcast_type: BroadcastType<B>) -> String {
         match broadcast_type {
