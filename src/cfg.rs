@@ -103,13 +103,11 @@ async fn test() {
         server.port(60000).await;
         server.enable_nodelay().await;
         server.disable_linger().await;
-        server.http_line_buffer_size(4096).await;
+        server.http_buffer_size(4096).await;
         server.ws_buffer_size(4096).await;
-        server.disable_internal_ws_handler("/{group_name}").await;
+        server.disable_ws_handler("/{group_name}").await;
         server.route("/{group_name}", group_chat_route).await;
-        server
-            .disable_internal_ws_handler("/{my_name}/{your_name}")
-            .await;
+        server.disable_ws_handler("/{my_name}/{your_name}").await;
         server
             .route("/{my_name}/{your_name}", private_chat_route)
             .await;
