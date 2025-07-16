@@ -187,7 +187,7 @@ impl WebSocket {
         };
         loop {
             tokio::select! {
-                request_res = ctx.ws_request_from_stream(buffer_size) => {
+                request_res = ctx.ws_from_stream(buffer_size) => {
                     let mut need_break = false;
                     if request_res.is_ok() {
                         request_handler(ctx.clone()).await;
