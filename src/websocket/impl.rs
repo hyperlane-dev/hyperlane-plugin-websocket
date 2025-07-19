@@ -169,11 +169,11 @@ impl WebSocket {
         on_client_closed: F3,
     ) where
         F1: FnSendSyncStatic<Fut1>,
-        Fut1: FutureSendStatic,
+        Fut1: FutureSendStatic<()>,
         F2: FnSendSyncStatic<Fut2>,
-        Fut2: FutureSendStatic,
+        Fut2: FutureSendStatic<()>,
         F3: FnSendSyncStatic<Fut3>,
-        Fut3: FutureSendStatic,
+        Fut3: FutureSendStatic<()>,
         B: BroadcastTypeTrait,
     {
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {

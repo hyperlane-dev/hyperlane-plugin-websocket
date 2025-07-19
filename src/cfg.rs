@@ -98,21 +98,16 @@ async fn test() {
     }
 
     async fn main() {
-        let server: Server = Server::new();
-        server.host("0.0.0.0").await;
-        server.port(60000).await;
-        server.enable_nodelay().await;
-        server.disable_linger().await;
-        server.http_buffer_size(4096).await;
-        server.ws_buffer_size(4096).await;
-        server.disable_ws_handler("/{group_name}").await;
-        server.route("/{group_name}", group_chat_route).await;
-        server.disable_ws_handler("/{my_name}/{your_name}").await;
-        server
+        Server::new()
+            .host("0.0.0.0")
+            .port(60000)
+            .disable_ws_hook("/{group_name}")
+            .route("/{group_name}", group_chat_route)
+            .disable_ws_hook("/{my_name}/{your_name}")
             .route("/{my_name}/{your_name}", private_chat_route)
-            .await;
-        server.on_ws_connected(on_ws_connected).await;
-        server.run().await.unwrap();
+            .connected_hook(on_ws_connected)
+            .run()
+            .unwrap();
     }
 
     let _ = tokio::time::timeout(std::time::Duration::from_secs(60), main()).await;
