@@ -36,7 +36,7 @@ fn get_broadcast_map() -> &'static WebSocket {
     BROADCAST_MAP.get_or_init(|| WebSocket::new())
 }
 
-async fn on_ws_connected(ctx: Context) {
+async fn connected_hook(ctx: Context) {
     let group_name: String = ctx.get_route_param("group_name").await.unwrap();
     let broadcast_type: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
     let receiver_count: ReceiverCount =
@@ -45,10 +45,10 @@ async fn on_ws_connected(ctx: Context) {
     get_broadcast_map()
         .send(broadcast_type, data)
         .unwrap_or_else(|err| {
-            println!("[on_ws_connected]send error => {:?}", err.to_string());
+            println!("[connected_hook]send error => {:?}", err.to_string());
             None
         });
-    println!("[on_ws_connected]receiver_count => {:?}", receiver_count);
+    println!("[connected_hook]receiver_count => {:?}", receiver_count);
     let _ = std::io::Write::flush(&mut std::io::stderr());
 }
 
@@ -134,7 +134,7 @@ async fn main() {
         .route("/{group_name}", group_chat_route)
         .disable_ws_hook("/{my_name}/{your_name}")
         .route("/{my_name}/{your_name}", private_chat_route)
-        .connected_hook(on_ws_connected)
+        .connected_hook(connected_hook)
         .run()
         .unwrap();
 }
