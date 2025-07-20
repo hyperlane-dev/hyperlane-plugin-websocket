@@ -127,16 +127,19 @@ async fn group_chat_route(ctx: Context) {
 
 #[tokio::main]
 async fn main() {
-    Server::new()
-        .host("0.0.0.0")
-        .port(60000)
-        .disable_ws_hook("/{group_name}")
-        .route("/{group_name}", group_chat_route)
-        .disable_ws_hook("/{my_name}/{your_name}")
+    let server: Server = Server::new();
+    server.host("0.0.0.0").await;
+    server.port(60000).await;
+    server.disable_ws_hook("/{group_name}").await;
+    server.route("/{group_name}", group_chat_route).await;
+    server.disable_ws_hook("/{my_name}/{your_name}").await;
+    server
         .route("/{my_name}/{your_name}", private_chat_route)
-        .connected_hook(connected_hook)
-        .run()
-        .unwrap();
+        .await;
+    server.connected_hook(connected_hook).await;
+    let result: ServerResult<()> = server.run().await;
+    println!("Server result: {:?}", result);
+    let _ = std::io::Write::flush(&mut std::io::stderr());
 }
 ```
 
