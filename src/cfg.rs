@@ -24,7 +24,7 @@ async fn test() {
         let _ = std::io::Write::flush(&mut std::io::stderr());
     }
 
-    async fn group_chat(ws_ctx: Context) {
+    async fn group_chat_hook(ws_ctx: Context) {
         let group_name: String = ws_ctx.get_route_param("group_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
         let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key);
@@ -48,7 +48,7 @@ async fn test() {
         let _ = std::io::Write::flush(&mut std::io::stderr());
     }
 
-    async fn private_chat(ctx: Context) {
+    async fn private_chat_hook(ctx: Context) {
         let my_name: String = ctx.get_route_param("my_name").await.unwrap();
         let your_name: String = ctx.get_route_param("your_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
@@ -76,24 +76,24 @@ async fn test() {
 
     async fn sended(ctx: Context) {
         let msg: String = ctx.get_response_body_string().await;
-        println!("[on_sended]msg => {}", msg);
+        println!("[sended_hook]msg => {}", msg);
         let _ = std::io::Write::flush(&mut std::io::stderr());
     }
 
-    async fn private_chat_route(ctx: Context) {
+    async fn private_chat(ctx: Context) {
         let my_name: String = ctx.get_route_param("my_name").await.unwrap();
         let your_name: String = ctx.get_route_param("your_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
         get_broadcast_map()
-            .run(&ctx, 1024, key, private_chat, sended, private_closed)
+            .run(&ctx, 1024, key, private_chat_hook, sended, private_closed)
             .await;
     }
 
-    async fn group_chat_route(ctx: Context) {
-        let your_name: String = ctx.get_route_param("group_name").await.unwrap();
-        let key: BroadcastType<&str> = BroadcastType::PointToGroup(&your_name);
+    async fn group_chat(ctx: Context) {
+        let group_name: String = ctx.get_route_param("group_name").await.unwrap();
+        let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
         get_broadcast_map()
-            .run(&ctx, 1024, key, group_chat, sended, group_closed)
+            .run(&ctx, 1024, key, group_chat_hook, sended, group_closed)
             .await;
     }
 
@@ -102,11 +102,9 @@ async fn test() {
         server.host("0.0.0.0").await;
         server.port(60000).await;
         server.disable_ws_hook("/{group_name}").await;
-        server.route("/{group_name}", group_chat_route).await;
+        server.route("/{group_name}", group_chat).await;
         server.disable_ws_hook("/{my_name}/{your_name}").await;
-        server
-            .route("/{my_name}/{your_name}", private_chat_route)
-            .await;
+        server.route("/{my_name}/{your_name}", private_chat).await;
         server.connected_hook(connected_hook).await;
         let result: ServerResult<()> = server.run().await;
         println!("Server result: {:?}", result);

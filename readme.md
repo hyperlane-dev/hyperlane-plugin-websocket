@@ -104,7 +104,7 @@ async fn private_closed(ctx: Context) {
 
 async fn sended(ctx: Context) {
     let msg: String = ctx.get_response_body_string().await;
-    println!("[on_sended]msg => {}", msg);
+    println!("[sended_hook]msg => {}", msg);
     let _ = std::io::Write::flush(&mut std::io::stderr());
 }
 
@@ -118,8 +118,8 @@ async fn private_chat_route(ctx: Context) {
 }
 
 async fn group_chat_route(ctx: Context) {
-    let your_name: String = ctx.get_route_param("group_name").await.unwrap();
-    let key: BroadcastType<&str> = BroadcastType::PointToGroup(&your_name);
+    let group_name: String = ctx.get_route_param("group_name").await.unwrap();
+    let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
     get_broadcast_map()
         .run(&ctx, 1024, key, group_chat, sended, group_closed)
         .await;

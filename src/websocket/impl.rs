@@ -164,9 +164,9 @@ impl WebSocket {
         ctx: &Context,
         buffer_size: usize,
         broadcast_type: BroadcastType<B>,
-        request_handler: F1,
-        on_sended: F2,
-        on_client_closed: F3,
+        request_hook: F1,
+        sended_hook: F2,
+        closed_hook: F3,
     ) where
         F1: FnSendSyncStatic<Fut1>,
         Fut1: FutureSendStatic<()>,
@@ -190,14 +190,14 @@ impl WebSocket {
                 request_res = ctx.ws_from_stream(buffer_size) => {
                     let mut need_break = false;
                     if request_res.is_ok() {
-                        request_handler(ctx.clone()).await;
+                        request_hook(ctx.clone()).await;
                     } else {
                         need_break = true;
-                        on_client_closed(ctx.clone()).await;
+                        closed_hook(ctx.clone()).await;
                     }
                     let body: ResponseBody = ctx.get_response_body().await;
                     let send_res: BroadcastMapSendResult<_> = self.broadcast_map.send(&key, body);
-                    on_sended(ctx.clone()).await;
+                    sended_hook(ctx.clone()).await;
                     if need_break || send_res.is_err() {
                         break;
                     }
