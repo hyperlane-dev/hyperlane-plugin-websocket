@@ -1,9 +1,11 @@
 use crate::*;
 
+#[derive(Debug, Clone)]
 pub struct WebSocket {
     pub(super) broadcast_map: BroadcastMap<Vec<u8>>,
 }
 
+#[derive(Clone)]
 pub struct WebSocketConfig<B: BroadcastTypeTrait> {
     pub(super) context: Context,
     pub(super) buffer_size: usize,
