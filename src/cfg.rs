@@ -85,7 +85,15 @@ async fn test() {
         let your_name: String = ctx.get_route_param("your_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
         get_broadcast_map()
-            .run(&ctx, 1024, key, private_chat_hook, sended, private_closed)
+            .run(
+                &ctx,
+                1024,
+                1024,
+                key,
+                private_chat_hook,
+                sended,
+                private_closed,
+            )
             .await;
     }
 
@@ -93,7 +101,7 @@ async fn test() {
         let group_name: String = ctx.get_route_param("group_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
         get_broadcast_map()
-            .run(&ctx, 1024, key, group_chat_hook, sended, group_closed)
+            .run(&ctx, 1024, 1024, key, group_chat_hook, sended, group_closed)
             .await;
     }
 

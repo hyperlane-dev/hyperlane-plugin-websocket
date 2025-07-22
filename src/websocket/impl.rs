@@ -105,21 +105,30 @@ impl WebSocket {
     fn subscribe_unwrap_or_insert<B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
+        capacity: Capacity,
     ) -> BroadcastMapReceiver<Vec<u8>> {
         let key: String = BroadcastType::get_key(broadcast_type);
-        self.broadcast_map.subscribe_unwrap_or_insert(&key)
+        self.broadcast_map.subscribe_or_insert(&key, capacity)
     }
 
     fn point_to_point<B: BroadcastTypeTrait>(
         &self,
         key1: &B,
         key2: &B,
+        capacity: Capacity,
     ) -> BroadcastMapReceiver<Vec<u8>> {
-        self.subscribe_unwrap_or_insert(BroadcastType::PointToPoint(key1.clone(), key2.clone()))
+        self.subscribe_unwrap_or_insert(
+            BroadcastType::PointToPoint(key1.clone(), key2.clone()),
+            capacity,
+        )
     }
 
-    fn point_to_group<B: BroadcastTypeTrait>(&self, key: &B) -> BroadcastMapReceiver<Vec<u8>> {
-        self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key.clone()))
+    fn point_to_group<B: BroadcastTypeTrait>(
+        &self,
+        key: &B,
+        capacity: Capacity,
+    ) -> BroadcastMapReceiver<Vec<u8>> {
+        self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key.clone()), capacity)
     }
 
     pub fn receiver_count<'a, B: BroadcastTypeTrait>(
@@ -163,6 +172,7 @@ impl WebSocket {
         &self,
         ctx: &Context,
         buffer_size: usize,
+        capacity: Capacity,
         broadcast_type: BroadcastType<B>,
         request_hook: F1,
         sended_hook: F2,
@@ -177,8 +187,8 @@ impl WebSocket {
         B: BroadcastTypeTrait,
     {
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
-            BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2),
-            BroadcastType::PointToGroup(key) => self.point_to_group(key),
+            BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2, capacity),
+            BroadcastType::PointToGroup(key) => self.point_to_group(key, capacity),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
         let result_handle = || async {
@@ -196,20 +206,19 @@ impl WebSocket {
                         closed_hook(ctx.clone()).await;
                     }
                     let body: ResponseBody = ctx.get_response_body().await;
-                    let send_res: BroadcastMapSendResult<_> = self.broadcast_map.send(&key, body);
+                    let is_err: bool = self.broadcast_map.send(&key, body).is_err();
                     sended_hook(ctx.clone()).await;
-                    if need_break || send_res.is_err() {
+                    if need_break || is_err {
                         break;
                     }
                 },
                 msg_res = receiver.recv() => {
                     if let Ok(msg) = msg_res {
-                        if ctx.set_response_body(msg).await.send_body().await.is_err() {
-                            break;
+                        if ctx.set_response_body(msg).await.send_body().await.is_ok() {
+                            continue;
                         }
-                    } else {
-                        break;
                     }
+                    break;
                }
             }
         }
