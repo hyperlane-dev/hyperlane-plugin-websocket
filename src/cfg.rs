@@ -15,11 +15,12 @@ async fn test() {
             get_broadcast_map().receiver_count_after_increment(broadcast_type);
         let data: String = format!("receiver_count => {:?}", receiver_count).into();
         get_broadcast_map()
-            .send(broadcast_type, data)
+            .send(broadcast_type, data.clone())
             .unwrap_or_else(|err| {
                 println!("[connected_hook]send error => {:?}", err.to_string());
                 None
             });
+        ctx.set_response_body(data).await;
         println!("[connected_hook]receiver_count => {:?}", receiver_count);
         let _ = std::io::Write::flush(&mut std::io::stderr());
     }
@@ -86,7 +87,7 @@ async fn test() {
         let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
         get_broadcast_map()
             .run(
-                &ctx,
+                ctx.clone(),
                 1024,
                 1024,
                 key,
@@ -101,7 +102,15 @@ async fn test() {
         let group_name: String = ctx.get_route_param("group_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
         get_broadcast_map()
-            .run(&ctx, 1024, 1024, key, group_chat_hook, sended, group_closed)
+            .run(
+                ctx.clone(),
+                1024,
+                1024,
+                key,
+                group_chat_hook,
+                sended,
+                group_closed,
+            )
             .await;
     }
 

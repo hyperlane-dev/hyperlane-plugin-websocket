@@ -170,7 +170,7 @@ impl WebSocket {
 
     pub async fn run<'a, F1, Fut1, F2, Fut2, F3, Fut3, B>(
         &self,
-        ctx: &Context,
+        ctx: Context,
         buffer_size: usize,
         capacity: Capacity,
         broadcast_type: BroadcastType<B>,
