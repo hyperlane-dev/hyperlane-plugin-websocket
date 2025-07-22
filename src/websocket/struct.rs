@@ -5,7 +5,7 @@ pub struct WebSocket {
 }
 
 pub struct WebSocketConfig<B: BroadcastTypeTrait> {
-    pub(super) ctx: Context,
+    pub(super) context: Context,
     pub(super) buffer_size: usize,
     pub(super) capacity: Capacity,
     pub(super) broadcast_type: BroadcastType<B>,

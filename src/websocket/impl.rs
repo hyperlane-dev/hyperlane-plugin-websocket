@@ -102,11 +102,11 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
     }
 }
 
-impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
-    pub fn new(ctx: Context) -> Self {
+impl<B: BroadcastTypeTrait> Default for WebSocketConfig<B> {
+    fn default() -> Self {
         let default_hook: ArcFnPinBoxSendSync = Arc::new(move |_| Box::pin(async {}));
         Self {
-            ctx,
+            context: Context::default(),
             buffer_size: DEFAULT_BUFFER_SIZE,
             capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
             broadcast_type: BroadcastType::default(),
@@ -114,6 +114,12 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
             sended_hook: default_hook.clone(),
             closed_hook: default_hook,
         }
+    }
+}
+
+impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn set_buffer_size(mut self, buffer_size: usize) -> Self {
@@ -126,8 +132,8 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         self
     }
 
-    pub fn set_ctx(mut self, ctx: Context) -> Self {
-        self.ctx = ctx;
+    pub fn set_context(mut self, context: Context) -> Self {
+        self.context = context;
         self
     }
 
@@ -163,8 +169,8 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         self
     }
 
-    pub fn get_ctx(&self) -> &Context {
-        &self.ctx
+    pub fn get_context(&self) -> &Context {
+        &self.context
     }
 
     pub fn get_buffer_size(&self) -> usize {
@@ -266,14 +272,17 @@ impl WebSocket {
     }
 
     pub async fn run<B: BroadcastTypeTrait>(&self, config: WebSocketConfig<B>) {
-        let ctx: Context = config.get_ctx().clone();
+        let ctx: Context = config.get_context().clone();
+        if ctx.to_string() == Context::default().to_string() {
+            panic!("Context must be set");
+        }
         let buffer_size: usize = config.get_buffer_size();
         let capacity: Capacity = config.get_capacity();
         let broadcast_type: BroadcastType<B> = config.get_broadcast_type().clone();
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2, capacity),
             BroadcastType::PointToGroup(key) => self.point_to_group(key, capacity),
-            BroadcastType::Unknown => panic!("broadcast_type is unknown"),
+            BroadcastType::Unknown => panic!("BroadcastType must be PointToPoint or PointToGroup"),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
         let result_handle = || async {

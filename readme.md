@@ -112,7 +112,8 @@ async fn private_chat(ctx: Context) {
     let my_name: String = ctx.get_route_param("my_name").await.unwrap();
     let your_name: String = ctx.get_route_param("your_name").await.unwrap();
     let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
-    let config: WebSocketConfig<&str> = WebSocketConfig::new(ctx.clone())
+    let config: WebSocketConfig<&str> = WebSocketConfig::new()
+        .set_context(ctx.clone())
         .set_broadcast_type(key)
         .set_buffer_size(4096)
         .set_capacity(1024)
@@ -125,7 +126,8 @@ async fn private_chat(ctx: Context) {
 async fn group_chat(ctx: Context) {
     let group_name: String = ctx.get_route_param("group_name").await.unwrap();
     let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
-    let config: WebSocketConfig<&str> = WebSocketConfig::new(ctx.clone())
+    let config: WebSocketConfig<&str> = WebSocketConfig::new()
+        .set_context(ctx.clone())
         .set_broadcast_type(key)
         .set_buffer_size(4096)
         .set_capacity(1024)
