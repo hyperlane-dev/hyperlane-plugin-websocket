@@ -12,6 +12,7 @@ pub(crate) use std::{
         NonZeroI8, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI128, NonZeroIsize, NonZeroU8,
         NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
     },
+    sync::Arc,
 };
 
 pub(crate) use hyperlane::{tokio::sync::broadcast::Receiver, *};

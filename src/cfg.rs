@@ -84,33 +84,27 @@ async fn test() {
         let my_name: String = ctx.get_route_param("my_name").await.unwrap();
         let your_name: String = ctx.get_route_param("your_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToPoint(&my_name, &your_name);
-        get_broadcast_map()
-            .run(
-                ctx.clone(),
-                1024,
-                1024,
-                key,
-                private_chat_hook,
-                sended,
-                private_closed,
-            )
-            .await;
+        let config: WebSocketConfig<&str> = WebSocketConfig::new(ctx.clone())
+            .set_broadcast_type(key)
+            .set_buffer_size(4096)
+            .set_capacity(1024)
+            .set_request_hook(private_chat_hook)
+            .set_sended_hook(sended)
+            .set_closed_hook(private_closed);
+        get_broadcast_map().run(config).await;
     }
 
     async fn group_chat(ctx: Context) {
         let group_name: String = ctx.get_route_param("group_name").await.unwrap();
         let key: BroadcastType<&str> = BroadcastType::PointToGroup(&group_name);
-        get_broadcast_map()
-            .run(
-                ctx.clone(),
-                1024,
-                1024,
-                key,
-                group_chat_hook,
-                sended,
-                group_closed,
-            )
-            .await;
+        let config: WebSocketConfig<&str> = WebSocketConfig::new(ctx.clone())
+            .set_broadcast_type(key)
+            .set_buffer_size(4096)
+            .set_capacity(1024)
+            .set_request_hook(group_chat_hook)
+            .set_sended_hook(sended)
+            .set_closed_hook(group_closed);
+        get_broadcast_map().run(config).await;
     }
 
     async fn main() {

@@ -72,6 +72,12 @@ impl BroadcastTypeTrait for &NonZeroI128 {}
 impl BroadcastTypeTrait for &NonZeroIsize {}
 impl BroadcastTypeTrait for &Infallible {}
 
+impl<B: BroadcastTypeTrait> Default for BroadcastType<B> {
+    fn default() -> Self {
+        BroadcastType::Unknown
+    }
+}
+
 impl<B: BroadcastTypeTrait> BroadcastType<B> {
     pub fn get_key(broadcast_type: BroadcastType<B>) -> String {
         match broadcast_type {
@@ -91,7 +97,98 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
             BroadcastType::PointToGroup(key) => {
                 format!("{}-{}", POINT_TO_GROUP_KEY, key.to_string())
             }
+            BroadcastType::Unknown => String::new(),
         }
+    }
+}
+
+impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
+    pub fn new(ctx: Context) -> Self {
+        let default_hook: ArcFnPinBoxSendSync = Arc::new(move |_| Box::pin(async {}));
+        Self {
+            ctx,
+            buffer_size: DEFAULT_BUFFER_SIZE,
+            capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
+            broadcast_type: BroadcastType::default(),
+            request_hook: default_hook.clone(),
+            sended_hook: default_hook.clone(),
+            closed_hook: default_hook,
+        }
+    }
+
+    pub fn set_buffer_size(mut self, buffer_size: usize) -> Self {
+        self.buffer_size = buffer_size;
+        self
+    }
+
+    pub fn set_capacity(mut self, capacity: Capacity) -> Self {
+        self.capacity = capacity;
+        self
+    }
+
+    pub fn set_ctx(mut self, ctx: Context) -> Self {
+        self.ctx = ctx;
+        self
+    }
+
+    pub fn set_broadcast_type(mut self, broadcast_type: BroadcastType<B>) -> Self {
+        self.broadcast_type = broadcast_type;
+        self
+    }
+
+    pub fn set_request_hook<F, Fut>(mut self, hook: F) -> Self
+    where
+        F: Fn(Context) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.request_hook = Arc::new(move |ctx| Box::pin(hook(ctx)));
+        self
+    }
+
+    pub fn set_sended_hook<F, Fut>(mut self, hook: F) -> Self
+    where
+        F: Fn(Context) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.sended_hook = Arc::new(move |ctx| Box::pin(hook(ctx)));
+        self
+    }
+
+    pub fn set_closed_hook<F, Fut>(mut self, hook: F) -> Self
+    where
+        F: Fn(Context) -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.closed_hook = Arc::new(move |ctx| Box::pin(hook(ctx)));
+        self
+    }
+
+    pub fn get_ctx(&self) -> &Context {
+        &self.ctx
+    }
+
+    pub fn get_buffer_size(&self) -> usize {
+        self.buffer_size
+    }
+
+    pub fn get_capacity(&self) -> Capacity {
+        self.capacity
+    }
+
+    pub fn get_broadcast_type(&self) -> &BroadcastType<B> {
+        &self.broadcast_type
+    }
+
+    pub fn get_request_hook(&self) -> &ArcFnPinBoxSendSync {
+        &self.request_hook
+    }
+
+    pub fn get_sended_hook(&self) -> &ArcFnPinBoxSendSync {
+        &self.sended_hook
+    }
+
+    pub fn get_closed_hook(&self) -> &ArcFnPinBoxSendSync {
+        &self.closed_hook
     }
 }
 
@@ -168,27 +265,15 @@ impl WebSocket {
         self.broadcast_map.send(&key, data.into())
     }
 
-    pub async fn run<'a, F1, Fut1, F2, Fut2, F3, Fut3, B>(
-        &self,
-        ctx: Context,
-        buffer_size: usize,
-        capacity: Capacity,
-        broadcast_type: BroadcastType<B>,
-        request_hook: F1,
-        sended_hook: F2,
-        closed_hook: F3,
-    ) where
-        F1: FnSendSyncStatic<Fut1>,
-        Fut1: FutureSendStatic<()>,
-        F2: FnSendSyncStatic<Fut2>,
-        Fut2: FutureSendStatic<()>,
-        F3: FnSendSyncStatic<Fut3>,
-        Fut3: FutureSendStatic<()>,
-        B: BroadcastTypeTrait,
-    {
+    pub async fn run<B: BroadcastTypeTrait>(&self, config: WebSocketConfig<B>) {
+        let ctx: Context = config.get_ctx().clone();
+        let buffer_size: usize = config.get_buffer_size();
+        let capacity: Capacity = config.get_capacity();
+        let broadcast_type: BroadcastType<B> = config.get_broadcast_type().clone();
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2, capacity),
             BroadcastType::PointToGroup(key) => self.point_to_group(key, capacity),
+            BroadcastType::Unknown => panic!("broadcast_type is unknown"),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
         let result_handle = || async {
@@ -200,14 +285,14 @@ impl WebSocket {
                 request_res = ctx.ws_from_stream(buffer_size) => {
                     let mut need_break = false;
                     if request_res.is_ok() {
-                        request_hook(ctx.clone()).await;
+                        config.get_request_hook()(ctx.clone()).await;
                     } else {
                         need_break = true;
-                        closed_hook(ctx.clone()).await;
+                        config.get_closed_hook()(ctx.clone()).await;
                     }
                     let body: ResponseBody = ctx.get_response_body().await;
                     let is_err: bool = self.broadcast_map.send(&key, body).is_err();
-                    sended_hook(ctx.clone()).await;
+                    config.get_sended_hook()(ctx.clone()).await;
                     if need_break || is_err {
                         break;
                     }

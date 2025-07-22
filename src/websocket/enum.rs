@@ -4,4 +4,5 @@ use crate::*;
 pub enum BroadcastType<T: BroadcastTypeTrait> {
     PointToPoint(T, T),
     PointToGroup(T),
+    Unknown,
 }
