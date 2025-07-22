@@ -219,7 +219,7 @@ impl WebSocket {
                         }
                     }
                     break;
-               }
+                }
             }
         }
         result_handle().await;
