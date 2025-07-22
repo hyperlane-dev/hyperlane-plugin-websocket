@@ -48,7 +48,6 @@ async fn connected_hook(ctx: Context) {
             println!("[connected_hook]send error => {:?}", err.to_string());
             None
         });
-    ctx.set_response_body(data).await;
     println!("[connected_hook]receiver_count => {:?}", receiver_count);
     let _ = std::io::Write::flush(&mut std::io::stderr());
 }
