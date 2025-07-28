@@ -1,3 +1,9 @@
+//! A WebSocket plugin for the Hyperlane framework.
+//!
+//! A WebSocket plugin for the Hyperlane framework,
+//! providing robust WebSocket communication capabilities and integrating
+//! with hyperlane-broadcast for efficient message dissemination.
+
 pub(crate) mod cfg;
 pub(crate) mod websocket;
 

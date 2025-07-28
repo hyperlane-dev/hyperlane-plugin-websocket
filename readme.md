@@ -14,7 +14,7 @@
 
 [Api Docs](https://docs.rs/hyperlane-plugin-websocket/latest/http_type/)
 
-> A websocket plugin for the hyperlane framework.
+> A WebSocket plugin for the Hyperlane framework, providing robust WebSocket communication capabilities and integrating with hyperlane-broadcast for efficient message dissemination.
 
 ## Installation
 
