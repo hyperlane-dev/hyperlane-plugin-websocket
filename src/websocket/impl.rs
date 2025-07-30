@@ -204,11 +204,11 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
     ///
     /// # Arguments
     ///
-    /// - `broadcast_type` - The broadcast type for which to generate the key.
+    /// - `BroadcastType<B>` - The broadcast type for which to generate the key.
     ///
     /// # Returns
     ///
-    /// A string representing the unique key for the broadcast type.
+    /// - `String` - The unique key string for the broadcast type.
     pub fn get_key(broadcast_type: BroadcastType<B>) -> String {
         match broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => {
@@ -260,7 +260,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     ///
     /// # Returns
     ///
-    /// A new WebSocket configuration instance.
+    /// - `WebSocketConfig<B>` - A new WebSocket configuration instance.
     pub fn new() -> Self {
         Self::default()
     }
@@ -467,7 +467,7 @@ impl WebSocket {
     ///
     /// # Returns
     ///
-    /// A new WebSocket instance.
+    /// - `WebSocket` - A new WebSocket instance.
     pub fn new() -> Self {
         Self {
             broadcast_map: BroadcastMap::default(),
