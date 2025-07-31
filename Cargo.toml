@@ -1,12 +1,12 @@
 [package]
 name = "hyperlane-plugin-websocket"
-version = "2.2.3"
+version = "2.2.4"
 edition = "2024"
 authors = ["root@ltpp.vip"]
 license = "MIT"
 description = """A WebSocket plugin for the Hyperlane framework, providing robust WebSocket communication capabilities and integrating with hyperlane-broadcast for efficient message dissemination."""
 keywords = ["http", "request", "response", "tcp", "redirect"]
-repository = "https://github.com/eastspire/hyperlane-plugin-websocket.git"
+repository = "https://github.com/hyperlane-utils/hyperlane-plugin-websocket.git"
 categories = ["network-programming", "web-programming"]
 exclude = [
     "target",
@@ -16,8 +16,8 @@ exclude = [
 ]
 
 [dependencies]
-hyperlane = "5.66.1"
-hyperlane-broadcast = "0.7.1"
+hyperlane = "5.66.4"
+hyperlane-broadcast = "0.7.3"
 
 [profile.dev]
 incremental = true
