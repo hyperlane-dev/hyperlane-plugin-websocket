@@ -122,14 +122,13 @@ async fn test() {
         server.disable_ws_hook("/{my_name}/{your_name}").await;
         server.route("/{my_name}/{your_name}", private_chat).await;
         server.connected_hook(connected_hook).await;
-        let server_run_hook: ServerRunHook = server.run().await.unwrap_or_default();
-        let shutdown_hook: ArcPinBoxFutureSend = server_run_hook.get_shutdown_hook().clone();
-        let get_wait_hook: &ArcPinBoxFutureSend = server_run_hook.get_wait_hook();
+        let server_hook: ServerHook = server.run().await.unwrap_or_default();
+        let server_hook_clone: ServerHook = server_hook.clone();
         tokio::spawn(async move {
             tokio::time::sleep(std::time::Duration::from_secs(60)).await;
-            shutdown_hook().await;
+            server_hook.shutdown().await;
         });
-        get_wait_hook().await;
+        server_hook_clone.wait().await;
     }
 
     let _ = tokio::time::timeout(std::time::Duration::from_secs(60), main()).await;

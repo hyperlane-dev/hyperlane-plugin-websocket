@@ -151,9 +151,8 @@ async fn main() {
     server.disable_ws_hook("/{my_name}/{your_name}").await;
     server.route("/{my_name}/{your_name}", private_chat).await;
     server.connected_hook(connected_hook).await;
-    let server_run_hook: ServerRunHook = server.run().await.unwrap_or_default();
-    let get_wait_hook: &ArcPinBoxFutureSend = server_run_hook.get_wait_hook();
-    get_wait_hook().await;
+    let server_hook: ServerHook = server.run().await.unwrap_or_default();
+    server_hook.wait().await;
 }
 ```
 
