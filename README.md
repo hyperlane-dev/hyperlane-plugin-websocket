@@ -151,9 +151,9 @@ async fn main() {
     server.disable_ws_hook("/{my_name}/{your_name}").await;
     server.route("/{my_name}/{your_name}", private_chat).await;
     server.connected_hook(connected_hook).await;
-    let result: ServerResult<()> = server.run().await;
-    println!("Server result: {:?}", result);
-    let _ = std::io::Write::flush(&mut std::io::stderr());
+    let server_run_hook: ServerRunHook = server.run().await.unwrap_or_default();
+    let get_wait_hook: &ArcPinBoxFutureSend = server_run_hook.get_wait_hook();
+    get_wait_hook().await;
 }
 ```
 
