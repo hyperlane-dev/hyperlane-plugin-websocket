@@ -242,7 +242,7 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
 /// - `B`: The type parameter for `WebSocketConfig`, which must implement `BroadcastTypeTrait`.
 impl<B: BroadcastTypeTrait> Default for WebSocketConfig<B> {
     fn default() -> Self {
-        let default_hook: ArcContextFnPinBoxSendSync = Arc::new(move |_| Box::pin(async {}));
+        let default_hook: ArcFnContextPinBoxSendSync<()> = Arc::new(move |_| Box::pin(async {}));
         Self {
             context: Context::default(),
             buffer_size: DEFAULT_BUFFER_SIZE,
@@ -436,8 +436,8 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     ///
     /// # Returns
     ///
-    /// - `&ArcContextFnPinBoxSendSync` - A reference to the request hook.
-    pub fn get_request_hook(&self) -> &ArcContextFnPinBoxSendSync {
+    /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the request hook.
+    pub fn get_request_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
         &self.request_hook
     }
 
@@ -445,8 +445,8 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     ///
     /// # Returns
     ///
-    /// - `&ArcContextFnPinBoxSendSync` - A reference to the sended hook.
-    pub fn get_sended_hook(&self) -> &ArcContextFnPinBoxSendSync {
+    /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the sended hook.
+    pub fn get_sended_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
         &self.sended_hook
     }
 
@@ -454,8 +454,8 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     ///
     /// # Returns
     ///
-    /// - `&ArcContextFnPinBoxSendSync` - A reference to the closed hook.
-    pub fn get_closed_hook(&self) -> &ArcContextFnPinBoxSendSync {
+    /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the closed hook.
+    pub fn get_closed_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
         &self.closed_hook
     }
 }

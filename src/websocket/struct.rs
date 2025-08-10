@@ -43,13 +43,13 @@ pub struct WebSocketConfig<B: BroadcastTypeTrait> {
     /// The request hook function.
     ///
     /// This hook is executed when a new request is received on the WebSocket.
-    pub(super) request_hook: ArcContextFnPinBoxSendSync,
+    pub(super) request_hook: ArcFnContextPinBoxSendSync<()>,
     /// The sended hook function.
     ///
     /// This hook is executed after a message has been successfully sent over the WebSocket.
-    pub(super) sended_hook: ArcContextFnPinBoxSendSync,
+    pub(super) sended_hook: ArcFnContextPinBoxSendSync<()>,
     /// The closed hook function.
     ///
     /// This hook is executed when the WebSocket connection is closed.
-    pub(super) closed_hook: ArcContextFnPinBoxSendSync,
+    pub(super) closed_hook: ArcFnContextPinBoxSendSync<()>,
 }
