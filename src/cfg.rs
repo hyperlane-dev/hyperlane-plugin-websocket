@@ -115,8 +115,14 @@ async fn test() {
 
     async fn main() {
         let server: Server = Server::new();
-        server.host("0.0.0.0").await;
-        server.port(60000).await;
+        let config: ServerConfig = ServerConfig::new();
+        config.host("0.0.0.0").await;
+        config.port(60000).await;
+        config.enable_nodelay().await;
+        config.disable_linger().await;
+        config.http_buffer(4096).await;
+        config.ws_buffer(4096).await;
+        server.config(config).await;
         server.disable_ws_hook("/{group_name}").await;
         server.route("/{group_name}", group_chat).await;
         server.disable_ws_hook("/{my_name}/{your_name}").await;
