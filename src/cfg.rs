@@ -114,7 +114,7 @@ async fn test() {
     }
 
     async fn main() {
-        let server: Server = Server::new();
+        let server: Server = Server::new().await;
         let config: ServerConfig = ServerConfig::new();
         config.host("0.0.0.0").await;
         config.port(60000).await;
