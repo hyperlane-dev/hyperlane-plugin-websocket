@@ -144,7 +144,7 @@ async fn group_chat(ctx: Context) {
 #[tokio::main]
 async fn main() {
     let server: Server = Server::new().await;
-    let config: ServerConfig = ServerConfig::new();
+    let config: ServerConfig = ServerConfig::new().await;
     config.host("0.0.0.0").await;
     config.port(60000).await;
     config.enable_nodelay().await;
