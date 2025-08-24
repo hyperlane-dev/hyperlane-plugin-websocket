@@ -5,7 +5,7 @@
 [![](https://img.shields.io/crates/v/hyperlane-plugin-websocket.svg)](https://crates.io/crates/hyperlane-plugin-websocket)
 [![](https://img.shields.io/crates/d/hyperlane-plugin-websocket.svg)](https://img.shields.io/crates/d/hyperlane-plugin-websocket.svg)
 [![](https://docs.rs/hyperlane-plugin-websocket/badge.svg)](https://docs.rs/hyperlane-plugin-websocket)
-[![](https://github.com/crates-dev/hyperlane-plugin-websocket/workflows/Rust/badge.svg)](https://github.com/crates-dev/hyperlane-plugin-websocket/actions?query=workflow:Rust)
+[![](https://github.com/hyperlane-dev/hyperlane-plugin-websocket/workflows/Rust/badge.svg)](https://github.com/hyperlane-dev/hyperlane-plugin-websocket/actions?query=workflow:Rust)
 [![](https://img.shields.io/crates/l/hyperlane-plugin-websocket.svg)](./LICENSE)
 
 </center>
