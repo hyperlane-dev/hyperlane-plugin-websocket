@@ -9,7 +9,7 @@ async fn test() {
     }
 
     async fn connected_hook(ctx: Context) {
-        let group_name: String = ctx.get_route_param("group_name").await.unwrap();
+        let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
         let broadcast_type: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
         let receiver_count: ReceiverCount =
             get_broadcast_map().receiver_count_after_increment(broadcast_type.clone());
@@ -28,7 +28,7 @@ async fn test() {
     }
 
     async fn group_chat_hook(ws_ctx: Context) {
-        let group_name: String = ws_ctx.get_route_param("group_name").await.unwrap();
+        let group_name: String = ws_ctx.try_get_route_param("group_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
         let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
         let mut body: RequestBody = ws_ctx.get_request_body().await;
@@ -42,7 +42,7 @@ async fn test() {
     }
 
     async fn group_closed(ctx: Context) {
-        let group_name: String = ctx.get_route_param("group_name").await.unwrap();
+        let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
         let receiver_count: ReceiverCount =
             get_broadcast_map().receiver_count_after_decrement(key.clone());
@@ -53,8 +53,8 @@ async fn test() {
     }
 
     async fn private_chat_hook(ctx: Context) {
-        let my_name: String = ctx.get_route_param("my_name").await.unwrap();
-        let your_name: String = ctx.get_route_param("your_name").await.unwrap();
+        let my_name: String = ctx.try_get_route_param("my_name").await.unwrap();
+        let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
         let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
         let mut body: RequestBody = ctx.get_request_body().await;
@@ -68,8 +68,8 @@ async fn test() {
     }
 
     async fn private_closed(ctx: Context) {
-        let my_name: String = ctx.get_route_param("my_name").await.unwrap();
-        let your_name: String = ctx.get_route_param("your_name").await.unwrap();
+        let my_name: String = ctx.try_get_route_param("my_name").await.unwrap();
+        let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
         let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_decrement(key);
         let body: String = format!("receiver_count => {:?}", receiver_count);
@@ -85,8 +85,8 @@ async fn test() {
     }
 
     async fn private_chat(ctx: Context) {
-        let my_name: String = ctx.get_route_param("my_name").await.unwrap();
-        let your_name: String = ctx.get_route_param("your_name").await.unwrap();
+        let my_name: String = ctx.try_get_route_param("my_name").await.unwrap();
+        let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
         let config: WebSocketConfig<String> = WebSocketConfig::new()
             .set_context(ctx.clone())
@@ -100,7 +100,7 @@ async fn test() {
     }
 
     async fn group_chat(ctx: Context) {
-        let group_name: String = ctx.get_route_param("group_name").await.unwrap();
+        let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
         let config: WebSocketConfig<String> = WebSocketConfig::new()
             .set_context(ctx.clone())
