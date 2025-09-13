@@ -36,24 +36,37 @@ fn get_broadcast_map() -> &'static WebSocket {
     BROADCAST_MAP.get_or_init(|| WebSocket::new())
 }
 
+async fn request_middleware(ctx: Context) {
+    let socket_addr: String = ctx.get_socket_addr_string().await;
+    ctx.set_response_version(HttpVersion::HTTP1_1)
+        .await
+        .set_response_status_code(200)
+        .await
+        .set_response_header(SERVER, HYPERLANE)
+        .await
+        .set_response_header(CONNECTION, KEEP_ALIVE)
+        .await
+        .set_response_header(CONTENT_TYPE, TEXT_PLAIN)
+        .await
+        .set_response_header(ACCESS_CONTROL_ALLOW_ORIGIN, WILDCARD_ANY)
+        .await
+        .set_response_header("SocketAddr", socket_addr)
+        .await;
+}
+
 async fn upgrade_hook(ctx: Context) {
     if !ctx.get_request().await.is_ws() {
         return;
     }
-    let _ = std::io::Write::flush(&mut std::io::stdout());
     if let Some(key) = &ctx.try_get_request_header_back(SEC_WEBSOCKET_KEY).await {
         let accept_key: String = WebSocketFrame::generate_accept_key(key);
-        ctx.set_response_version(HttpVersion::HTTP1_1)
-            .await
-            .set_response_status_code(101)
+        ctx.set_response_status_code(101)
             .await
             .set_response_header(UPGRADE, WEBSOCKET)
             .await
             .set_response_header(CONNECTION, UPGRADE)
             .await
             .set_response_header(SEC_WEBSOCKET_ACCEPT, accept_key)
-            .await
-            .set_response_header(ACCESS_CONTROL_ALLOW_ORIGIN, WILDCARD_ANY)
             .await
             .send()
             .await
@@ -196,6 +209,7 @@ async fn main() {
     server.config(config).await;
     server.route("/{group_name}", group_chat).await;
     server.route("/{my_name}/{your_name}", private_chat).await;
+    server.request_middleware(request_middleware).await;
     server.request_middleware(upgrade_hook).await;
     server.request_middleware(connected_hook).await;
     let server_hook: ServerHook = server.run().await.unwrap_or_default();
