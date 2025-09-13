@@ -695,7 +695,8 @@ impl WebSocket {
                 },
                 msg_res = receiver.recv() => {
                     if let Ok(msg) = msg_res {
-                        if ctx.set_response_body(msg).await.send_body().await.is_ok() {
+                        let frame_list: Vec<ResponseBody> = WebSocketFrame::create_frame_list(msg.clone());
+                        if ctx.send_body_list_with_data(frame_list).await.is_ok() {
                             continue;
                         }
                     }
