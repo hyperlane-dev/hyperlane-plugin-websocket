@@ -40,6 +40,8 @@ async fn test() {
                 .await
                 .set_response_header(SEC_WEBSOCKET_ACCEPT, &accept_key)
                 .await
+                .set_response_body(&vec![])
+                .await
                 .send()
                 .await
                 .unwrap();
