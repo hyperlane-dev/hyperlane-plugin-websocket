@@ -205,7 +205,8 @@ async fn main() {
     config.host("0.0.0.0").await;
     config.port(60000).await;
     config.buffer(4096).await;
-    config.enable_nodelay().await;
+    config.disable_linger().await;
+    config.disable_nodelay().await;
     server.config(config).await;
     server.route("/{group_name}", group_chat).await;
     server.route("/{my_name}/{your_name}", private_chat).await;
