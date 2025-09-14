@@ -4,7 +4,7 @@
 //! providing robust WebSocket communication capabilities and integrating
 //! with hyperlane-broadcast for efficient message dissemination.
 
-pub(crate) mod cfg;
+pub(crate) mod tests;
 pub(crate) mod websocket;
 
 pub use websocket::{r#enum::*, r#struct::*};
