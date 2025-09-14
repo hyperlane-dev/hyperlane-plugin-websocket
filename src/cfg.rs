@@ -22,7 +22,7 @@ async fn test() {
             .await
             .set_response_header(ACCESS_CONTROL_ALLOW_ORIGIN, WILDCARD_ANY)
             .await
-            .set_response_header("SocketAddr", socket_addr)
+            .set_response_header("SocketAddr", &socket_addr)
             .await;
     }
 
@@ -38,7 +38,7 @@ async fn test() {
                 .await
                 .set_response_header(CONNECTION, UPGRADE)
                 .await
-                .set_response_header(SEC_WEBSOCKET_ACCEPT, accept_key)
+                .set_response_header(SEC_WEBSOCKET_ACCEPT, &accept_key)
                 .await
                 .send()
                 .await
@@ -93,7 +93,7 @@ async fn test() {
             receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
             body = format!("receiver_count => {:?}", receiver_count).into();
         }
-        ws_ctx.set_response_body(body).await;
+        ws_ctx.set_response_body(&body).await;
         println!("[group_chat]receiver_count => {:?}", receiver_count);
         let _ = std::io::Write::flush(&mut std::io::stdout());
     }
@@ -104,7 +104,7 @@ async fn test() {
         let receiver_count: ReceiverCount =
             get_broadcast_map().receiver_count_after_decrement(key.clone());
         let body: String = format!("receiver_count => {:?}", receiver_count);
-        ctx.set_response_body(body).await;
+        ctx.set_response_body(&body).await;
         println!("[group_closed]receiver_count => {:?}", receiver_count);
         let _ = std::io::Write::flush(&mut std::io::stdout());
     }
@@ -119,7 +119,7 @@ async fn test() {
             receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
             body = format!("receiver_count => {:?}", receiver_count).into();
         }
-        ctx.set_response_body(body).await;
+        ctx.set_response_body(&body).await;
         println!("[private_chat]receiver_count => {:?}", receiver_count);
         let _ = std::io::Write::flush(&mut std::io::stdout());
     }
@@ -130,7 +130,7 @@ async fn test() {
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
         let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_decrement(key);
         let body: String = format!("receiver_count => {:?}", receiver_count);
-        ctx.set_response_body(body).await;
+        ctx.set_response_body(&body).await;
         println!("[private_closed]receiver_count => {:?}", receiver_count);
         let _ = std::io::Write::flush(&mut std::io::stdout());
     }
