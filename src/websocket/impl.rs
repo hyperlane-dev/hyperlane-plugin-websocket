@@ -209,6 +209,7 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
     /// # Returns
     ///
     /// - `String` - The unique key string for the broadcast type.
+    #[inline]
     pub fn get_key(broadcast_type: BroadcastType<B>) -> String {
         match broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => {
@@ -261,6 +262,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - A new WebSocket configuration instance.
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
@@ -274,6 +276,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
+    #[inline]
     pub fn set_buffer_size(mut self, buffer_size: usize) -> Self {
         self.buffer_size = buffer_size;
         self
@@ -288,6 +291,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
+    #[inline]
     pub fn set_capacity(mut self, capacity: Capacity) -> Self {
         self.capacity = capacity;
         self
@@ -302,6 +306,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
+    #[inline]
     pub fn set_context(mut self, context: Context) -> Self {
         self.context = context;
         self
@@ -316,6 +321,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
+    #[inline]
     pub fn set_broadcast_type(mut self, broadcast_type: BroadcastType<B>) -> Self {
         self.broadcast_type = broadcast_type;
         self
@@ -337,6 +343,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// The modified WebSocket configuration instance.
+    #[inline]
     pub fn set_request_hook<F, Fut>(mut self, hook: F) -> Self
     where
         F: Fn(Context) -> Fut + Send + Sync + 'static,
@@ -362,6 +369,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// The modified WebSocket configuration instance.
+    #[inline]
     pub fn set_sended_hook<F, Fut>(mut self, hook: F) -> Self
     where
         F: Fn(Context) -> Fut + Send + Sync + 'static,
@@ -387,6 +395,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// The modified WebSocket configuration instance.
+    #[inline]
     pub fn set_closed_hook<F, Fut>(mut self, hook: F) -> Self
     where
         F: Fn(Context) -> Fut + Send + Sync + 'static,
@@ -401,6 +410,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `&Context` - A reference to the context object.
+    #[inline]
     pub fn get_context(&self) -> &Context {
         &self.context
     }
@@ -410,6 +420,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `usize` - The buffer size in bytes.
+    #[inline]
     pub fn get_buffer_size(&self) -> usize {
         self.buffer_size
     }
@@ -419,6 +430,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `Capacity` - The capacity.
+    #[inline]
     pub fn get_capacity(&self) -> Capacity {
         self.capacity
     }
@@ -428,6 +440,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `&BroadcastType<B>` - A reference to the broadcast type object.
+    #[inline]
     pub fn get_broadcast_type(&self) -> &BroadcastType<B> {
         &self.broadcast_type
     }
@@ -437,6 +450,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the request hook.
+    #[inline]
     pub fn get_request_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
         &self.request_hook
     }
@@ -446,6 +460,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the sended hook.
+    #[inline]
     pub fn get_sended_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
         &self.sended_hook
     }
@@ -455,6 +470,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// # Returns
     ///
     /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the closed hook.
+    #[inline]
     pub fn get_closed_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
         &self.closed_hook
     }
@@ -468,6 +484,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `WebSocket` - A new WebSocket instance.
+    #[inline]
     pub fn new() -> Self {
         Self {
             broadcast_map: BroadcastMap::default(),
@@ -488,6 +505,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `BroadcastMapReceiver<Vec<u8>>` - A broadcast map receiver for the specified broadcast type.
+    #[inline]
     fn subscribe_unwrap_or_insert<B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
@@ -512,6 +530,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `BroadcastMapReceiver<Vec<u8>>` - A broadcast map receiver for the point-to-point broadcast.
+    #[inline]
     fn point_to_point<B: BroadcastTypeTrait>(
         &self,
         key1: &B,
@@ -538,6 +557,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `BroadcastMapReceiver<Vec<u8>>` - A broadcast map receiver for the point-to-group broadcast.
+    #[inline]
     fn point_to_group<B: BroadcastTypeTrait>(
         &self,
         key: &B,
@@ -559,6 +579,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `ReceiverCount` - The number of active receivers for the broadcast type, or 0 if not found.
+    #[inline]
     pub fn receiver_count<'a, B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
@@ -582,6 +603,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `ReceiverCount` - The incremented receiver count.
+    #[inline]
     pub fn receiver_count_after_increment<B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
@@ -605,6 +627,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `ReceiverCount` - The decremented receiver count.
+    #[inline]
     pub fn receiver_count_after_decrement<B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
@@ -628,6 +651,7 @@ impl WebSocket {
     /// # Returns
     ///
     /// - `BroadcastMapSendResult<Vec<u8>>` - A result indicating the success or failure of the send operation.
+    #[inline]
     pub fn send<T, B>(
         &self,
         broadcast_type: BroadcastType<B>,
