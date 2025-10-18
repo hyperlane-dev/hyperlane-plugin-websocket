@@ -2,11 +2,16 @@ use crate::*;
 
 #[tokio::test]
 async fn main() {
-    struct RequestMiddleware {}
-    struct UpgradeHook {}
-    struct ConnectedHook {}
-    struct GroupChat {}
-    struct PrivateChat {}
+    struct RequestMiddleware;
+    struct UpgradeHook;
+    struct ConnectedHook;
+    struct GroupChat;
+    struct PrivateChat;
+    struct PrivateClosedHook;
+    struct SendedHook;
+    struct GroupChatRequestHook;
+    struct GroupClosedHook;
+    struct PrivateChatRequestHook;
 
     static BROADCAST_MAP: OnceLock<WebSocket> = OnceLock::new();
 
@@ -16,8 +21,9 @@ async fn main() {
 
     impl ServerHook for RequestMiddleware {
         async fn new(_ctx: &Context) -> Self {
-            Self {}
+            Self
         }
+
         async fn handle(self, ctx: &Context) {
             let socket_addr: String = ctx.get_socket_addr_string().await;
             ctx.set_response_version(HttpVersion::HTTP1_1)
@@ -39,8 +45,9 @@ async fn main() {
 
     impl ServerHook for UpgradeHook {
         async fn new(_ctx: &Context) -> Self {
-            Self {}
+            Self
         }
+
         async fn handle(self, ctx: &Context) {
             if !ctx.get_request().await.is_ws() {
                 return;
@@ -66,7 +73,7 @@ async fn main() {
 
     impl ServerHook for ConnectedHook {
         async fn new(_ctx: &Context) -> Self {
-            Self {}
+            Self
         }
 
         async fn handle(self, ctx: &Context) {
@@ -109,66 +116,97 @@ async fn main() {
         }
     }
 
-    async fn group_chat_hook(ctx: Context) {
-        let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
-        let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
-        let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
-        let mut body: RequestBody = ctx.get_request_body().await;
-        if body.is_empty() {
-            receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
-            body = format!("receiver_count => {:?}", receiver_count).into();
+    impl ServerHook for GroupChatRequestHook {
+        async fn new(_ctx: &Context) -> Self {
+            Self
         }
-        ctx.set_response_body(&body).await;
-        println!("[group_chat]receiver_count => {:?}", receiver_count);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
-    }
 
-    async fn group_closed(ctx: Context) {
-        let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
-        let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
-        let receiver_count: ReceiverCount =
-            get_broadcast_map().receiver_count_after_decrement(key.clone());
-        let body: String = format!("receiver_count => {:?}", receiver_count);
-        ctx.set_response_body(&body).await;
-        println!("[group_closed]receiver_count => {:?}", receiver_count);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
-    }
-
-    async fn private_chat_hook(ctx: Context) {
-        let my_name: String = ctx.try_get_route_param("my_name").await.unwrap();
-        let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
-        let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
-        let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
-        let mut body: RequestBody = ctx.get_request_body().await;
-        if body.is_empty() {
-            receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
-            body = format!("receiver_count => {:?}", receiver_count).into();
+        async fn handle(self, ctx: &Context) {
+            let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
+            let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
+            let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
+            let mut body: RequestBody = ctx.get_request_body().await;
+            if body.is_empty() {
+                receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
+                body = format!("receiver_count => {:?}", receiver_count).into();
+            }
+            ctx.set_response_body(&body).await;
+            println!("[group_chat]receiver_count => {:?}", receiver_count);
+            let _ = std::io::Write::flush(&mut std::io::stdout());
         }
-        ctx.set_response_body(&body).await;
-        println!("[private_chat]receiver_count => {:?}", receiver_count);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
     }
 
-    async fn private_closed(ctx: Context) {
-        let my_name: String = ctx.try_get_route_param("my_name").await.unwrap();
-        let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
-        let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
-        let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_decrement(key);
-        let body: String = format!("receiver_count => {:?}", receiver_count);
-        ctx.set_response_body(&body).await;
-        println!("[private_closed]receiver_count => {:?}", receiver_count);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+    impl ServerHook for GroupClosedHook {
+        async fn new(_ctx: &Context) -> Self {
+            Self
+        }
+
+        async fn handle(self, ctx: &Context) {
+            let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
+            let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
+            let receiver_count: ReceiverCount =
+                get_broadcast_map().receiver_count_after_decrement(key.clone());
+            let body: String = format!("receiver_count => {:?}", receiver_count);
+            ctx.set_response_body(&body).await;
+            println!("[group_closed]receiver_count => {:?}", receiver_count);
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+        }
     }
 
-    async fn sended(ctx: Context) {
-        let msg: String = ctx.get_response_body_string().await;
-        println!("[sended_hook]msg => {}", msg);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+    impl ServerHook for PrivateChatRequestHook {
+        async fn new(_ctx: &Context) -> Self {
+            Self
+        }
+
+        async fn handle(self, ctx: &Context) {
+            let my_name: String = ctx.try_get_route_param("my_name").await.unwrap();
+            let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
+            let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
+            let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
+            let mut body: RequestBody = ctx.get_request_body().await;
+            if body.is_empty() {
+                receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
+                body = format!("receiver_count => {:?}", receiver_count).into();
+            }
+            ctx.set_response_body(&body).await;
+            println!("[private_chat]receiver_count => {:?}", receiver_count);
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+        }
+    }
+
+    impl ServerHook for PrivateClosedHook {
+        async fn new(_ctx: &Context) -> Self {
+            Self
+        }
+
+        async fn handle(self, ctx: &Context) {
+            let my_name: String = ctx.try_get_route_param("my_name").await.unwrap();
+            let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
+            let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
+            let receiver_count: ReceiverCount =
+                get_broadcast_map().receiver_count_after_decrement(key);
+            let body: String = format!("receiver_count => {:?}", receiver_count);
+            ctx.set_response_body(&body).await;
+            println!("[private_closed]receiver_count => {:?}", receiver_count);
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+        }
+    }
+
+    impl ServerHook for SendedHook {
+        async fn new(_ctx: &Context) -> Self {
+            Self
+        }
+
+        async fn handle(self, ctx: &Context) {
+            let msg: String = ctx.get_response_body_string().await;
+            println!("[sended_hook]msg => {}", msg);
+            let _ = std::io::Write::flush(&mut std::io::stdout());
+        }
     }
 
     impl ServerHook for PrivateChat {
         async fn new(_ctx: &Context) -> Self {
-            Self {}
+            Self
         }
 
         async fn handle(self, ctx: &Context) {
@@ -180,16 +218,16 @@ async fn main() {
                 .set_broadcast_type(key)
                 .set_buffer_size(4096)
                 .set_capacity(1024)
-                .set_request_hook(private_chat_hook)
-                .set_sended_hook(sended)
-                .set_closed_hook(private_closed);
+                .set_request_hook::<PrivateChatRequestHook>()
+                .set_sended_hook::<SendedHook>()
+                .set_closed_hook::<PrivateClosedHook>();
             get_broadcast_map().run(config).await;
         }
     }
 
     impl ServerHook for GroupChat {
         async fn new(_ctx: &Context) -> Self {
-            Self {}
+            Self
         }
 
         async fn handle(self, ctx: &Context) {
@@ -200,9 +238,9 @@ async fn main() {
                 .set_broadcast_type(key)
                 .set_buffer_size(4096)
                 .set_capacity(1024)
-                .set_request_hook(group_chat_hook)
-                .set_sended_hook(sended)
-                .set_closed_hook(group_closed);
+                .set_request_hook::<GroupChatRequestHook>()
+                .set_sended_hook::<SendedHook>()
+                .set_closed_hook::<GroupClosedHook>();
             get_broadcast_map().run(config).await;
         }
     }

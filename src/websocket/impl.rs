@@ -236,14 +236,14 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
 /// Implements the `Default` trait for `WebSocketConfig`.
 ///
 /// Provides a default configuration for WebSocket connections, including
-/// default hook functions that do nothing.
+/// default hook types that do nothing.
 ///
 /// # Type Parameters
 ///
 /// - `B`: The type parameter for `WebSocketConfig`, which must implement `BroadcastTypeTrait`.
 impl<B: BroadcastTypeTrait> Default for WebSocketConfig<B> {
     fn default() -> Self {
-        let default_hook: ArcFnContextPinBoxSendSync<()> = Arc::new(move |_| Box::pin(async {}));
+        let default_hook: ServerHookHandler = Arc::new(|_ctx| Box::pin(async {}));
         Self {
             context: Context::default(),
             buffer_size: DEFAULT_BUFFER_SIZE,
@@ -266,7 +266,9 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     pub fn new() -> Self {
         Self::default()
     }
+}
 
+impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     /// Sets the buffer size for the WebSocket connection.
     ///
     /// # Arguments
@@ -327,84 +329,6 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         self
     }
 
-    /// Sets the request hook function.
-    ///
-    /// This hook is executed when a new request is received.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `F`: The type of the function, which must be `Fn(Context) -> Fut + Send + Sync + 'static`.
-    /// - `Fut`: The future returned by the function, which must be `Future<Output = ()> + Send + 'static`.
-    ///
-    /// # Arguments
-    ///
-    /// - `hook` - The function to be used as the request hook.
-    ///
-    /// # Returns
-    ///
-    /// The modified WebSocket configuration instance.
-    #[inline]
-    pub fn set_request_hook<F, Fut>(mut self, hook: F) -> Self
-    where
-        F: Fn(Context) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = ()> + Send + 'static,
-    {
-        self.request_hook = Arc::new(move |ctx| Box::pin(hook(ctx)));
-        self
-    }
-
-    /// Sets the sended hook function.
-    ///
-    /// This hook is executed after a message has been sent.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `F`: The type of the function, which must be `Fn(Context) -> Fut + Send + Sync + 'static`.
-    /// - `Fut`: The future returned by the function, which must be `Future<Output = ()> + Send + 'static`.
-    ///
-    /// # Arguments
-    ///
-    /// - `hook` - The function to be used as the sended hook.
-    ///
-    /// # Returns
-    ///
-    /// The modified WebSocket configuration instance.
-    #[inline]
-    pub fn set_sended_hook<F, Fut>(mut self, hook: F) -> Self
-    where
-        F: Fn(Context) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = ()> + Send + 'static,
-    {
-        self.sended_hook = Arc::new(move |ctx| Box::pin(hook(ctx)));
-        self
-    }
-
-    /// Sets the closed hook function.
-    ///
-    /// This hook is executed when the WebSocket connection is closed.
-    ///
-    /// # Type Parameters
-    ///
-    /// - `F`: The type of the function, which must be `Fn(Context) -> Fut + Send + Sync + 'static`.
-    /// - `Fut`: The future returned by the function, which must be `Future<Output = ()> + Send + 'static`.
-    ///
-    /// # Arguments
-    ///
-    /// - `hook` - The function to be used as the closed hook.
-    ///
-    /// # Returns
-    ///
-    /// The modified WebSocket configuration instance.
-    #[inline]
-    pub fn set_closed_hook<F, Fut>(mut self, hook: F) -> Self
-    where
-        F: Fn(Context) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = ()> + Send + 'static,
-    {
-        self.closed_hook = Arc::new(move |ctx| Box::pin(hook(ctx)));
-        self
-    }
-
     /// Retrieves a reference to the context associated with this configuration.
     ///
     /// # Returns
@@ -445,33 +369,150 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         &self.broadcast_type
     }
 
-    /// Retrieves a reference to the request hook function.
+    /// Sets the request hook handler.
+    ///
+    /// This hook is executed when a new request is received on the WebSocket.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `S`: The hook type, which must implement `ServerHook`.
     ///
     /// # Returns
     ///
-    /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the request hook.
+    /// The modified `WebSocketConfig` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// struct MyRequestHook;
+    /// impl ServerHook for MyRequestHook {
+    ///     async fn new(_ctx: &Context) -> Self { Self }
+    ///     async fn handle(self, ctx: &Context) { /* ... */ }
+    /// }
+    ///
+    /// let config = WebSocketConfig::new()
+    ///     .set_request_hook::<MyRequestHook>();
+    /// ```
     #[inline]
-    pub fn get_request_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
+    pub fn set_request_hook<S>(mut self) -> Self
+    where
+        S: ServerHook,
+    {
+        self.request_hook = Arc::new(|ctx| {
+            let ctx = ctx.clone();
+            Box::pin(async move {
+                let hook = S::new(&ctx).await;
+                hook.handle(&ctx).await;
+            })
+        });
+        self
+    }
+
+    /// Sets the sended hook handler.
+    ///
+    /// This hook is executed after a message has been successfully sent over the WebSocket.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `S`: The hook type, which must implement `ServerHook`.
+    ///
+    /// # Returns
+    ///
+    /// The modified `WebSocketConfig` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// struct MySendedHook;
+    /// impl ServerHook for MySendedHook {
+    ///     async fn new(_ctx: &Context) -> Self { Self }
+    ///     async fn handle(self, ctx: &Context) { /* ... */ }
+    /// }
+    ///
+    /// let config = WebSocketConfig::new()
+    ///     .set_sended_hook::<MySendedHook>();
+    /// ```
+    #[inline]
+    pub fn set_sended_hook<S>(mut self) -> Self
+    where
+        S: ServerHook,
+    {
+        self.sended_hook = Arc::new(|ctx| {
+            let ctx: Context = ctx.clone();
+            Box::pin(async move {
+                let hook = S::new(&ctx).await;
+                hook.handle(&ctx).await;
+            })
+        });
+        self
+    }
+
+    /// Sets the closed hook handler.
+    ///
+    /// This hook is executed when the WebSocket connection is closed.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `S`: The hook type, which must implement `ServerHook`.
+    ///
+    /// # Returns
+    ///
+    /// The modified `WebSocketConfig` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// struct MyClosedHook;
+    /// impl ServerHook for MyClosedHook {
+    ///     async fn new(_ctx: &Context) -> Self { Self }
+    ///     async fn handle(self, ctx: &Context) { /* ... */ }
+    /// }
+    ///
+    /// let config = WebSocketConfig::new()
+    ///     .set_closed_hook::<MyClosedHook>();
+    /// ```
+    #[inline]
+    pub fn set_closed_hook<S>(mut self) -> Self
+    where
+        S: ServerHook,
+    {
+        self.closed_hook = Arc::new(|ctx| {
+            let ctx: Context = ctx.clone();
+            Box::pin(async move {
+                let hook = S::new(&ctx).await;
+                hook.handle(&ctx).await;
+            })
+        });
+        self
+    }
+
+    /// Retrieves a reference to the request hook handler.
+    ///
+    /// # Returns
+    ///
+    /// - `&ServerHookHandler` - A reference to the request hook handler.
+    #[inline]
+    pub fn get_request_hook(&self) -> &ServerHookHandler {
         &self.request_hook
     }
 
-    /// Retrieves a reference to the sended hook function.
+    /// Retrieves a reference to the sended hook handler.
     ///
     /// # Returns
     ///
-    /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the sended hook.
+    /// - `&ServerHookHandler` - A reference to the sended hook handler.
     #[inline]
-    pub fn get_sended_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
+    pub fn get_sended_hook(&self) -> &ServerHookHandler {
         &self.sended_hook
     }
 
-    /// Retrieves a reference to the closed hook function.
+    /// Retrieves a reference to the closed hook handler.
     ///
     /// # Returns
     ///
-    /// - `&ArcFnContextPinBoxSendSync<()>` - A reference to the closed hook.
+    /// - `&ServerHookHandler` - A reference to the closed hook handler.
     #[inline]
-    pub fn get_closed_hook(&self) -> &ArcFnContextPinBoxSendSync<()> {
+    pub fn get_closed_hook(&self) -> &ServerHookHandler {
         &self.closed_hook
     }
 }
@@ -486,9 +527,7 @@ impl WebSocket {
     /// - `WebSocket` - A new WebSocket instance.
     #[inline]
     pub fn new() -> Self {
-        Self {
-            broadcast_map: BroadcastMap::default(),
-        }
+        Self::default()
     }
 
     /// Subscribes to a broadcast type or inserts a new one if it doesn't exist.
@@ -580,7 +619,7 @@ impl WebSocket {
     ///
     /// - `ReceiverCount` - The number of active receivers for the broadcast type, or 0 if not found.
     #[inline]
-    pub fn receiver_count<'a, B: BroadcastTypeTrait>(
+    pub fn receiver_count<B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
     ) -> ReceiverCount {
@@ -609,7 +648,7 @@ impl WebSocket {
         broadcast_type: BroadcastType<B>,
     ) -> ReceiverCount {
         let count: ReceiverCount = self.receiver_count(broadcast_type);
-        count.max(0).min(ReceiverCount::MAX - 1) + 1
+        count.clamp(0, ReceiverCount::MAX - 1) + 1
     }
 
     /// Calculates the receiver count after decrementing it.
@@ -633,7 +672,7 @@ impl WebSocket {
         broadcast_type: BroadcastType<B>,
     ) -> ReceiverCount {
         let count: ReceiverCount = self.receiver_count(broadcast_type);
-        count.max(1).min(ReceiverCount::MAX) - 1
+        count.clamp(1, ReceiverCount::MAX) - 1
     }
 
     /// Sends data to all active receivers for a given broadcast type.
@@ -705,14 +744,14 @@ impl WebSocket {
                 request_res = ctx.ws_from_stream(buffer_size) => {
                     let mut need_break = false;
                     if request_res.is_ok() {
-                        config.get_request_hook()(ctx.clone()).await;
+                        config.get_request_hook()(&ctx).await;
                     } else {
                         need_break = true;
-                        config.get_closed_hook()(ctx.clone()).await;
+                        config.get_closed_hook()(&ctx).await;
                     }
                     let body: ResponseBody = ctx.get_response_body().await;
                     let is_err: bool = self.broadcast_map.send(&key, body).is_err();
-                    config.get_sended_hook()(ctx.clone()).await;
+                    config.get_sended_hook()(&ctx).await;
                     if need_break || is_err {
                         break;
                     }

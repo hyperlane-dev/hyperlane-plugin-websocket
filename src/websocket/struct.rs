@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// This struct manages broadcast capabilities and holds the internal broadcast map
 /// responsible for handling message distribution to various WebSocket connections.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct WebSocket {
     /// The internal broadcast map.
     ///
@@ -16,7 +16,7 @@ pub struct WebSocket {
 ///
 /// This struct encapsulates all necessary parameters for setting up and managing
 /// a WebSocket connection, including context, buffer sizes, capacity, broadcast type,
-/// and various hook functions for different lifecycle events.
+/// and hook handlers for different lifecycle events.
 ///
 /// # Type Parameters
 ///
@@ -40,16 +40,16 @@ pub struct WebSocketConfig<B: BroadcastTypeTrait> {
     /// This defines the type of broadcast this WebSocket connection will participate in
     /// (point-to-point or point-to-group).
     pub(super) broadcast_type: BroadcastType<B>,
-    /// The request hook function.
+    /// The request hook handler.
     ///
     /// This hook is executed when a new request is received on the WebSocket.
-    pub(super) request_hook: ArcFnContextPinBoxSendSync<()>,
-    /// The sended hook function.
+    pub(super) request_hook: ServerHookHandler,
+    /// The sended hook handler.
     ///
     /// This hook is executed after a message has been successfully sent over the WebSocket.
-    pub(super) sended_hook: ArcFnContextPinBoxSendSync<()>,
-    /// The closed hook function.
+    pub(super) sended_hook: ServerHookHandler,
+    /// The closed hook handler.
     ///
     /// This hook is executed when the WebSocket connection is closed.
-    pub(super) closed_hook: ArcFnContextPinBoxSendSync<()>,
+    pub(super) closed_hook: ServerHookHandler,
 }
