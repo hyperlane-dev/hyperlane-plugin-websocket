@@ -399,7 +399,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         S: ServerHook,
     {
         self.request_hook = Arc::new(|ctx| {
-            let ctx = ctx.clone();
+            let ctx: Context = ctx.clone();
             Box::pin(async move {
                 let hook = S::new(&ctx).await;
                 hook.handle(&ctx).await;
