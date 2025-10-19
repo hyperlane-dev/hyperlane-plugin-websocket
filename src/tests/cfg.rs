@@ -1,7 +1,7 @@
 use crate::*;
 
 #[tokio::test]
-async fn main() {
+async fn test_server() {
     struct RequestMiddleware;
     struct UpgradeHook;
     struct ConnectedHook;
@@ -245,24 +245,28 @@ async fn main() {
         }
     }
 
-    let server: Server = Server::new().await;
-    let config: ServerConfig = ServerConfig::new().await;
-    config.host("0.0.0.0").await;
-    config.port(60000).await;
-    config.buffer(4096).await;
-    config.disable_linger().await;
-    config.disable_nodelay().await;
-    server.config(config).await;
-    server.request_middleware::<RequestMiddleware>().await;
-    server.request_middleware::<UpgradeHook>().await;
-    server.request_middleware::<ConnectedHook>().await;
-    server.route::<GroupChat>("/{group_name}").await;
-    server.route::<PrivateChat>("/{my_name}/{your_name}").await;
-    let server_hook: ServerControlHook = server.run().await.unwrap_or_default();
-    let server_hook_clone: ServerControlHook = server_hook.clone();
-    tokio::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_secs(60)).await;
-        server_hook.shutdown().await;
-    });
-    server_hook_clone.wait().await;
+    async fn main() {
+        let server: Server = Server::new().await;
+        let config: ServerConfig = ServerConfig::new().await;
+        config.host("0.0.0.0").await;
+        config.port(60000).await;
+        config.buffer(4096).await;
+        config.disable_linger().await;
+        config.disable_nodelay().await;
+        server.config(config).await;
+        server.request_middleware::<RequestMiddleware>().await;
+        server.request_middleware::<UpgradeHook>().await;
+        server.request_middleware::<ConnectedHook>().await;
+        server.route::<GroupChat>("/{group_name}").await;
+        server.route::<PrivateChat>("/{my_name}/{your_name}").await;
+        let server_hook: ServerControlHook = server.run().await.unwrap_or_default();
+        let server_hook_clone: ServerControlHook = server_hook.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+            server_hook.shutdown().await;
+        });
+        server_hook_clone.wait().await;
+    }
+
+    main().await;
 }
