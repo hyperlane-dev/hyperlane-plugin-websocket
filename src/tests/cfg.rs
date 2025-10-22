@@ -93,24 +93,21 @@ async fn test_server() {
             let private_broadcast_type: BroadcastType<String> =
                 BroadcastType::PointToPoint(my_name, your_name);
             let data: String = format!("receiver_count => {:?}", receiver_count).into();
-            tokio::spawn(async move {
-                tokio::task::yield_now().await;
-                get_broadcast_map()
-                    .send(group_broadcast_type, data.clone())
-                    .unwrap_or_else(|err| {
-                        println!("[connected_hook]send group error => {:?}", err.to_string());
-                        None
-                    });
-                get_broadcast_map()
-                    .send(private_broadcast_type, data)
-                    .unwrap_or_else(|err| {
-                        println!(
-                            "[connected_hook]send private error => {:?}",
-                            err.to_string()
-                        );
-                        None
-                    });
-            });
+            get_broadcast_map()
+                .send(group_broadcast_type, data.clone())
+                .unwrap_or_else(|err| {
+                    println!("[connected_hook]send group error => {:?}", err.to_string());
+                    None
+                });
+            get_broadcast_map()
+                .send(private_broadcast_type, data)
+                .unwrap_or_else(|err| {
+                    println!(
+                        "[connected_hook]send private error => {:?}",
+                        err.to_string()
+                    );
+                    None
+                });
             println!("[connected_hook]receiver_count => {:?}", receiver_count);
             let _ = std::io::Write::flush(&mut std::io::stdout());
         }
