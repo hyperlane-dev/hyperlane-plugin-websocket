@@ -249,6 +249,7 @@ impl<B: BroadcastTypeTrait> Default for WebSocketConfig<B> {
             buffer_size: DEFAULT_BUFFER_SIZE,
             capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
             broadcast_type: BroadcastType::default(),
+            connected_hook: default_hook.clone(),
             request_hook: default_hook.clone(),
             sended_hook: default_hook.clone(),
             closed_hook: default_hook,
@@ -369,6 +370,44 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         &self.broadcast_type
     }
 
+    /// Sets the connected hook handler.
+    ///
+    /// This hook is executed when the WebSocket connection is established.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `S`: The hook type, which must implement `ServerHook`.
+    ///
+    /// # Returns
+    ///
+    /// The modified `WebSocketConfig` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// struct MyConnectedHook;
+    /// impl ServerHook for MyConnectedHook {
+    ///     async fn new(_ctx: &Context) -> Self { Self }
+    ///     async fn handle(self, ctx: &Context) { /* ... */ }
+    /// }
+    ///
+    /// let config = WebSocketConfig::new()
+    ///     .set_connected_hook::<MyConnectedHook>();
+    /// ```
+    #[inline]
+    pub fn set_connected_hook<S>(mut self) -> Self
+    where
+        S: ServerHook,
+    {
+        self.connected_hook = Arc::new(|ctx| {
+            let ctx: Context = ctx.clone();
+            Box::pin(async move {
+                S::new(&ctx).await.handle(&ctx).await;
+            })
+        });
+        self
+    }
+
     /// Sets the request hook handler.
     ///
     /// This hook is executed when a new request is received on the WebSocket.
@@ -401,8 +440,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         self.request_hook = Arc::new(|ctx| {
             let ctx: Context = ctx.clone();
             Box::pin(async move {
-                let hook = S::new(&ctx).await;
-                hook.handle(&ctx).await;
+                S::new(&ctx).await.handle(&ctx).await;
             })
         });
         self
@@ -440,8 +478,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         self.sended_hook = Arc::new(|ctx| {
             let ctx: Context = ctx.clone();
             Box::pin(async move {
-                let hook = S::new(&ctx).await;
-                hook.handle(&ctx).await;
+                S::new(&ctx).await.handle(&ctx).await;
             })
         });
         self
@@ -479,11 +516,20 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         self.closed_hook = Arc::new(|ctx| {
             let ctx: Context = ctx.clone();
             Box::pin(async move {
-                let hook = S::new(&ctx).await;
-                hook.handle(&ctx).await;
+                S::new(&ctx).await.handle(&ctx).await;
             })
         });
         self
+    }
+
+    /// Retrieves a reference to the connected hook handler.
+    ///
+    /// # Returns
+    ///
+    /// - `&ServerHookHandler` - A reference to the connected hook handler.
+    #[inline]
+    pub fn get_connected_hook(&self) -> &ServerHookHandler {
+        &self.connected_hook
     }
 
     /// Retrieves a reference to the request hook handler.
@@ -627,7 +673,7 @@ impl WebSocket {
         self.broadcast_map.receiver_count(&key).unwrap_or(0)
     }
 
-    /// Calculates the receiver count after incrementing it.
+    /// Calculates the receiver count before a connection is established.
     ///
     /// Ensures the count does not exceed the maximum allowed value minus one.
     ///
@@ -637,13 +683,13 @@ impl WebSocket {
     ///
     /// # Arguments
     ///
-    /// - `BroadcastType<B>` - The broadcast type for which to increment the receiver count.
+    /// - `BroadcastType<B>` - The broadcast type for which to get the receiver count.
     ///
     /// # Returns
     ///
-    /// - `ReceiverCount` - The incremented receiver count.
+    /// - `ReceiverCount` - The receiver count after the connection is established.
     #[inline]
-    pub fn receiver_count_after_increment<B: BroadcastTypeTrait>(
+    pub fn receiver_count_before_connected<B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
     ) -> ReceiverCount {
@@ -651,7 +697,7 @@ impl WebSocket {
         count.clamp(0, ReceiverCount::MAX - 1) + 1
     }
 
-    /// Calculates the receiver count after decrementing it.
+    /// Calculates the receiver count after a connection is closed.
     ///
     /// Ensures the count does not go below 0.
     ///
@@ -661,13 +707,13 @@ impl WebSocket {
     ///
     /// # Arguments
     ///
-    /// - `BroadcastType<B>` - The broadcast type for which to decrement the receiver count.
+    /// - `BroadcastType<B>` - The broadcast type for which to get the receiver count.
     ///
     /// # Returns
     ///
-    /// - `ReceiverCount` - The decremented receiver count.
+    /// - `ReceiverCount` - The receiver count after the connection is closed.
     #[inline]
-    pub fn receiver_count_after_decrement<B: BroadcastTypeTrait>(
+    pub fn receiver_count_after_closed<B: BroadcastTypeTrait>(
         &self,
         broadcast_type: BroadcastType<B>,
     ) -> ReceiverCount {
@@ -735,6 +781,7 @@ impl WebSocket {
             BroadcastType::Unknown => panic!("BroadcastType must be PointToPoint or PointToGroup"),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
+        config.get_connected_hook()(&ctx).await;
         let result_handle = || async {
             ctx.aborted().await;
             ctx.closed().await;

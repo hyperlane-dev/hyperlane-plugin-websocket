@@ -40,6 +40,10 @@ pub struct WebSocketConfig<B: BroadcastTypeTrait> {
     /// This defines the type of broadcast this WebSocket connection will participate in
     /// (point-to-point or point-to-group).
     pub(super) broadcast_type: BroadcastType<B>,
+    /// The connected hook handler.
+    ///
+    /// This hook is executed when the WebSocket connection is established.
+    pub(super) connected_hook: ServerHookHandler,
     /// The request hook handler.
     ///
     /// This hook is executed when a new request is received on the WebSocket.

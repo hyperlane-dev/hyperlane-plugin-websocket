@@ -4,9 +4,9 @@ use crate::*;
 async fn test_server() {
     struct RequestMiddleware;
     struct UpgradeHook;
-    struct ConnectedHook;
     struct GroupChat;
     struct PrivateChat;
+    struct ConnectedHook;
     struct PrivateClosedHook;
     struct SendedHook;
     struct GroupChatRequestHook;
@@ -84,7 +84,7 @@ async fn test_server() {
             let group_broadcast_type: BroadcastType<String> =
                 BroadcastType::PointToGroup(group_name);
             let receiver_count: ReceiverCount =
-                get_broadcast_map().receiver_count_after_increment(group_broadcast_type.clone());
+                get_broadcast_map().receiver_count(group_broadcast_type.clone());
             let my_name: String = ctx.try_get_route_param("my_name").await.unwrap_or_default();
             let your_name: String = ctx
                 .try_get_route_param("your_name")
@@ -127,7 +127,7 @@ async fn test_server() {
             let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
             let mut body: RequestBody = ctx.get_request_body().await;
             if body.is_empty() {
-                receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
+                receiver_count = get_broadcast_map().receiver_count_after_closed(key);
                 body = format!("receiver_count => {:?}", receiver_count).into();
             }
             ctx.set_response_body(&body).await;
@@ -145,7 +145,7 @@ async fn test_server() {
             let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
             let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
             let receiver_count: ReceiverCount =
-                get_broadcast_map().receiver_count_after_decrement(key.clone());
+                get_broadcast_map().receiver_count_after_closed(key.clone());
             let body: String = format!("receiver_count => {:?}", receiver_count);
             ctx.set_response_body(&body).await;
             println!("[group_closed]receiver_count => {:?}", receiver_count);
@@ -165,7 +165,7 @@ async fn test_server() {
             let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
             let mut body: RequestBody = ctx.get_request_body().await;
             if body.is_empty() {
-                receiver_count = get_broadcast_map().receiver_count_after_decrement(key);
+                receiver_count = get_broadcast_map().receiver_count_after_closed(key);
                 body = format!("receiver_count => {:?}", receiver_count).into();
             }
             ctx.set_response_body(&body).await;
@@ -184,7 +184,7 @@ async fn test_server() {
             let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
             let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
             let receiver_count: ReceiverCount =
-                get_broadcast_map().receiver_count_after_decrement(key);
+                get_broadcast_map().receiver_count_after_closed(key);
             let body: String = format!("receiver_count => {:?}", receiver_count);
             ctx.set_response_body(&body).await;
             println!("[private_closed]receiver_count => {:?}", receiver_count);
@@ -218,6 +218,7 @@ async fn test_server() {
                 .set_broadcast_type(key)
                 .set_buffer_size(4096)
                 .set_capacity(1024)
+                .set_connected_hook::<ConnectedHook>()
                 .set_request_hook::<PrivateChatRequestHook>()
                 .set_sended_hook::<SendedHook>()
                 .set_closed_hook::<PrivateClosedHook>();
@@ -238,6 +239,7 @@ async fn test_server() {
                 .set_broadcast_type(key)
                 .set_buffer_size(4096)
                 .set_capacity(1024)
+                .set_connected_hook::<ConnectedHook>()
                 .set_request_hook::<GroupChatRequestHook>()
                 .set_sended_hook::<SendedHook>()
                 .set_closed_hook::<GroupClosedHook>();
@@ -256,7 +258,6 @@ async fn test_server() {
         server.config(config).await;
         server.request_middleware::<RequestMiddleware>().await;
         server.request_middleware::<UpgradeHook>().await;
-        server.request_middleware::<ConnectedHook>().await;
         server.route::<GroupChat>("/{group_name}").await;
         server.route::<PrivateChat>("/{my_name}/{your_name}").await;
         let server_hook: ServerControlHook = server.run().await.unwrap_or_default();
