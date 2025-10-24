@@ -399,12 +399,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     where
         S: ServerHook,
     {
-        self.connected_hook = Arc::new(|ctx| {
-            let ctx: Context = ctx.clone();
-            Box::pin(async move {
-                S::new(&ctx).await.handle(&ctx).await;
-            })
-        });
+        self.connected_hook = server_hook_factory::<S>();
         self
     }
 
@@ -437,12 +432,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     where
         S: ServerHook,
     {
-        self.request_hook = Arc::new(|ctx| {
-            let ctx: Context = ctx.clone();
-            Box::pin(async move {
-                S::new(&ctx).await.handle(&ctx).await;
-            })
-        });
+        self.request_hook = server_hook_factory::<S>();
         self
     }
 
@@ -475,12 +465,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     where
         S: ServerHook,
     {
-        self.sended_hook = Arc::new(|ctx| {
-            let ctx: Context = ctx.clone();
-            Box::pin(async move {
-                S::new(&ctx).await.handle(&ctx).await;
-            })
-        });
+        self.sended_hook = server_hook_factory::<S>();
         self
     }
 
@@ -513,12 +498,7 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     where
         S: ServerHook,
     {
-        self.closed_hook = Arc::new(|ctx| {
-            let ctx: Context = ctx.clone();
-            Box::pin(async move {
-                S::new(&ctx).await.handle(&ctx).await;
-            })
-        });
+        self.closed_hook = server_hook_factory::<S>();
         self
     }
 
