@@ -769,11 +769,9 @@ impl WebSocket {
         loop {
             tokio::select! {
                 request_res = ctx.ws_from_stream(buffer_size) => {
-                    let mut need_break = false;
                     if request_res.is_ok() {
                         config.get_request_hook()(&ctx).await;
                     } else {
-                        need_break = true;
                         config.get_closed_hook()(&ctx).await;
                     }
                     if ctx.get_aborted().await {
@@ -785,7 +783,7 @@ impl WebSocket {
                     let body: ResponseBody = ctx.get_response_body().await;
                     let is_err: bool = self.broadcast_map.send(&key, body).is_err();
                     config.get_sended_hook()(&ctx).await;
-                    if need_break || is_err || ctx.get_closed().await{
+                    if is_err || ctx.get_closed().await{
                         break;
                     }
                 },
