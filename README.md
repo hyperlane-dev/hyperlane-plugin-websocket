@@ -332,8 +332,8 @@ async fn main() {
     server.request_middleware::<UpgradeHook>().await;
     server.route::<GroupChat>("/{group_name}").await;
     server.route::<PrivateChat>("/{my_name}/{your_name}").await;
-    let server_hook: ServerControlHook = server.run().await.unwrap_or_default();
-    server_hook.wait().await;
+    let server_control_hook: ServerControlHook = server.run().await.unwrap_or_default();
+    server_control_hook.wait().await;
 }
 ```
 
