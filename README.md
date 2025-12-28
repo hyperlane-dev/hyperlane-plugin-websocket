@@ -34,6 +34,10 @@ struct RequestMiddleware {
     socket_addr: String,
 }
 struct UpgradeHook;
+struct ServerPanicHook {
+    response_body: String,
+    content_type: String,
+}
 struct GroupChat;
 struct PrivateChat {
     config: WebSocketConfig<String>,
@@ -67,7 +71,7 @@ struct PrivateChatRequestHook {
 static BROADCAST_MAP: OnceLock<WebSocket> = OnceLock::new();
 
 fn get_broadcast_map() -> &'static WebSocket {
-    BROADCAST_MAP.get_or_init(|| WebSocket::new())
+    BROADCAST_MAP.get_or_init(WebSocket::new)
 }
 
 impl ServerHook for RequestMiddleware {
@@ -105,7 +109,9 @@ impl ServerHook for UpgradeHook {
         }
         if let Some(key) = &ctx.try_get_request_header_back(SEC_WEBSOCKET_KEY).await {
             let accept_key: String = WebSocketFrame::generate_accept_key(key);
-            ctx.set_response_status_code(101)
+            ctx.set_response_version(HttpVersion::Http1_1)
+                .await
+                .set_response_status_code(101)
                 .await
                 .set_response_header(UPGRADE, WEBSOCKET)
                 .await
@@ -139,7 +145,7 @@ impl ServerHook for ConnectedHook {
             .unwrap_or_default();
         let private_broadcast_type: BroadcastType<String> =
             BroadcastType::PointToPoint(my_name, your_name);
-        let data: String = format!("receiver_count => {:?}", receiver_count).into();
+        let data: String = format!("receiver_count => {receiver_count:?}");
         Self {
             receiver_count,
             data,
@@ -180,7 +186,7 @@ impl ServerHook for GroupChatRequestHook {
         let mut body: RequestBody = ctx.get_request_body().await;
         if body.is_empty() {
             receiver_count = get_broadcast_map().receiver_count_after_closed(key);
-            body = format!("receiver_count => {:?}", receiver_count).into();
+            body = format!("receiver_count => {receiver_count:?}").into();
         }
         Self {
             body,
@@ -201,7 +207,7 @@ impl ServerHook for GroupClosedHook {
         let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
         let receiver_count: ReceiverCount =
             get_broadcast_map().receiver_count_after_closed(key.clone());
-        let body: String = format!("receiver_count => {:?}", receiver_count);
+        let body: String = format!("receiver_count => {receiver_count:?}");
         Self {
             body,
             receiver_count,
@@ -224,7 +230,7 @@ impl ServerHook for PrivateChatRequestHook {
         let mut body: RequestBody = ctx.get_request_body().await;
         if body.is_empty() {
             receiver_count = get_broadcast_map().receiver_count_after_closed(key);
-            body = format!("receiver_count => {:?}", receiver_count).into();
+            body = format!("receiver_count => {receiver_count:?}").into();
         }
         Self {
             body,
@@ -246,7 +252,7 @@ impl ServerHook for PrivateClosedHook {
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
         let receiver_count: ReceiverCount =
             get_broadcast_map().receiver_count_after_closed(key);
-        let body: String = format!("receiver_count => {:?}", receiver_count);
+        let body: String = format!("receiver_count => {receiver_count:?}");
         Self {
             body,
             receiver_count,
@@ -315,6 +321,37 @@ impl ServerHook for GroupChat {
             .set_sended_hook::<SendedHook>()
             .set_closed_hook::<GroupClosedHook>();
         get_broadcast_map().run(config).await;
+    }
+}
+
+impl ServerHook for ServerPanicHook {
+    async fn new(ctx: &Context) -> Self {
+        let error: Panic = ctx.try_get_panic().await.unwrap_or_default();
+        let response_body: String = error.to_string();
+        let content_type: String =
+            ContentType::format_content_type_with_charset(TEXT_PLAIN, UTF8);
+        Self {
+            response_body,
+            content_type,
+        }
+    }
+
+    async fn handle(self, ctx: &Context) {
+        let _ = ctx
+            .set_response_version(HttpVersion::Http1_1)
+            .await
+            .set_response_status_code(500)
+            .await
+            .clear_response_headers()
+            .await
+            .set_response_header(SERVER, HYPERLANE)
+            .await
+            .set_response_header(CONTENT_TYPE, &self.content_type)
+            .await
+            .set_response_body(&self.response_body)
+            .await
+            .send()
+            .await;
     }
 }
 
