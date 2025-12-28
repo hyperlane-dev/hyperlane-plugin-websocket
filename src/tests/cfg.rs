@@ -39,7 +39,7 @@ async fn test_server() {
     static BROADCAST_MAP: OnceLock<WebSocket> = OnceLock::new();
 
     fn get_broadcast_map() -> &'static WebSocket {
-        BROADCAST_MAP.get_or_init(|| WebSocket::new())
+        BROADCAST_MAP.get_or_init(WebSocket::new)
     }
 
     impl ServerHook for RequestMiddleware {
@@ -49,7 +49,7 @@ async fn test_server() {
         }
 
         async fn handle(self, ctx: &Context) {
-            ctx.set_response_version(HttpVersion::HTTP1_1)
+            ctx.set_response_version(HttpVersion::Http1_1)
                 .await
                 .set_response_status_code(200)
                 .await
@@ -111,7 +111,7 @@ async fn test_server() {
                 .unwrap_or_default();
             let private_broadcast_type: BroadcastType<String> =
                 BroadcastType::PointToPoint(my_name, your_name);
-            let data: String = format!("receiver_count => {:?}", receiver_count).into();
+            let data: String = format!("receiver_count => {receiver_count:?}");
             Self {
                 receiver_count,
                 data,
@@ -152,7 +152,7 @@ async fn test_server() {
             let mut body: RequestBody = ctx.get_request_body().await;
             if body.is_empty() {
                 receiver_count = get_broadcast_map().receiver_count_after_closed(key);
-                body = format!("receiver_count => {:?}", receiver_count).into();
+                body = format!("receiver_count => {receiver_count:?}").into();
             }
             Self {
                 body,
@@ -173,7 +173,7 @@ async fn test_server() {
             let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
             let receiver_count: ReceiverCount =
                 get_broadcast_map().receiver_count_after_closed(key.clone());
-            let body: String = format!("receiver_count => {:?}", receiver_count);
+            let body: String = format!("receiver_count => {receiver_count:?}");
             Self {
                 body,
                 receiver_count,
@@ -196,7 +196,7 @@ async fn test_server() {
             let mut body: RequestBody = ctx.get_request_body().await;
             if body.is_empty() {
                 receiver_count = get_broadcast_map().receiver_count_after_closed(key);
-                body = format!("receiver_count => {:?}", receiver_count).into();
+                body = format!("receiver_count => {receiver_count:?}").into();
             }
             Self {
                 body,
@@ -218,7 +218,7 @@ async fn test_server() {
             let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
             let receiver_count: ReceiverCount =
                 get_broadcast_map().receiver_count_after_closed(key);
-            let body: String = format!("receiver_count => {:?}", receiver_count);
+            let body: String = format!("receiver_count => {receiver_count:?}");
             Self {
                 body,
                 receiver_count,
@@ -255,7 +255,7 @@ async fn test_server() {
             let config: WebSocketConfig<String> = WebSocketConfig::new()
                 .set_context(ctx.clone())
                 .set_broadcast_type(key)
-                .set_buffer_size(4096)
+                .set_request_config(RequestConfig::default())
                 .set_capacity(1024)
                 .set_connected_hook::<ConnectedHook>()
                 .set_request_hook::<PrivateChatRequestHook>()
@@ -280,7 +280,7 @@ async fn test_server() {
             let config: WebSocketConfig<String> = WebSocketConfig::new()
                 .set_context(ctx.clone())
                 .set_broadcast_type(key)
-                .set_buffer_size(4096)
+                .set_request_config(RequestConfig::default())
                 .set_capacity(1024)
                 .set_connected_hook::<ConnectedHook>()
                 .set_request_hook::<GroupChatRequestHook>()
@@ -295,7 +295,7 @@ async fn test_server() {
         let config: ServerConfig = ServerConfig::new().await;
         config.host("0.0.0.0").await;
         config.port(60000).await;
-        config.buffer(4096).await;
+        config.request_config(RequestConfig::default()).await;
         config.disable_linger().await;
         config.disable_nodelay().await;
         server.config(config).await;

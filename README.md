@@ -77,7 +77,7 @@ impl ServerHook for RequestMiddleware {
     }
 
     async fn handle(self, ctx: &Context) {
-        ctx.set_response_version(HttpVersion::HTTP1_1)
+        ctx.set_response_version(HttpVersion::Http1_1)
             .await
             .set_response_status_code(200)
             .await
@@ -283,7 +283,7 @@ impl ServerHook for PrivateChat {
         let config: WebSocketConfig<String> = WebSocketConfig::new()
             .set_context(ctx.clone())
             .set_broadcast_type(key)
-            .set_buffer_size(4096)
+            .set_request_config(RequestConfig::default())
             .set_capacity(1024)
             .set_connected_hook::<ConnectedHook>()
             .set_request_hook::<PrivateChatRequestHook>()
@@ -308,7 +308,7 @@ impl ServerHook for GroupChat {
         let config: WebSocketConfig<String> = WebSocketConfig::new()
             .set_context(ctx.clone())
             .set_broadcast_type(key)
-            .set_buffer_size(4096)
+            .set_request_config(RequestConfig::default())
             .set_capacity(1024)
             .set_connected_hook::<ConnectedHook>()
             .set_request_hook::<GroupChatRequestHook>()
@@ -318,13 +318,12 @@ impl ServerHook for GroupChat {
     }
 }
 
-#[tokio::main]
 async fn main() {
     let server: Server = Server::new().await;
     let config: ServerConfig = ServerConfig::new().await;
     config.host("0.0.0.0").await;
     config.port(60000).await;
-    config.buffer(4096).await;
+    config.request_config(RequestConfig::default()).await;
     config.disable_linger().await;
     config.disable_nodelay().await;
     server.config(config).await;

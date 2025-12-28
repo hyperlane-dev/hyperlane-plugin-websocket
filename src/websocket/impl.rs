@@ -2,182 +2,249 @@ use crate::*;
 
 /// Allows `String` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for String {}
+
 /// Allows string slices to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &str {}
+
 /// Allows `char` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for char {}
+
 /// Allows `bool` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for bool {}
+
 /// Allows `i8` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for i8 {}
+
 /// Allows `i16` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for i16 {}
+
 /// Allows `i32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for i32 {}
+
 /// Allows `i64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for i64 {}
+
 /// Allows `i128` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for i128 {}
+
 /// Allows `isize` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for isize {}
+
 /// Allows `u8` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for u8 {}
+
 /// Allows `u16` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for u16 {}
+
 /// Allows `u32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for u32 {}
+
 /// Allows `u64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for u64 {}
+
 /// Allows `u128` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for u128 {}
+
 /// Allows `usize` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for usize {}
+
 /// Allows `f32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for f32 {}
+
 /// Allows `f64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for f64 {}
+
 /// Allows `IpAddr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for IpAddr {}
+
 /// Allows `Ipv4Addr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for Ipv4Addr {}
+
 /// Allows `Ipv6Addr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for Ipv6Addr {}
+
 /// Allows `SocketAddr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for SocketAddr {}
+
 /// Allows `NonZeroU8` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroU8 {}
+
 /// Allows `NonZeroU16` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroU16 {}
+
 /// Allows `NonZeroU32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroU32 {}
+
 /// Allows `NonZeroU64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroU64 {}
+
 /// Allows `NonZeroU128` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroU128 {}
+
 /// Allows `NonZeroUsize` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroUsize {}
+
 /// Allows `NonZeroI8` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroI8 {}
+
 /// Allows `NonZeroI16` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroI16 {}
+
 /// Allows `NonZeroI32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroI32 {}
+
 /// Allows `NonZeroI64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroI64 {}
+
 /// Allows `NonZeroI128` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroI128 {}
+
 /// Allows `NonZeroIsize` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for NonZeroIsize {}
+
 /// Allows `Infallible` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for Infallible {}
 
 /// Allows references to `String` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &String {}
+
 /// Allows double references to string slices to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &&str {}
+
 /// Allows references to `char` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &char {}
+
 /// Allows references to `bool` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &bool {}
+
 /// Allows references to `i8` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &i8 {}
+
 /// Allows references to `i16` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &i16 {}
+
 /// Allows references to `i32` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &i32 {}
+
 /// Allows references to `i64` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &i64 {}
+
 /// Allows references to `i128` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &i128 {}
+
 /// Allows references to `isize` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &isize {}
+
 /// Allows references to `u8` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &u8 {}
+
 /// Allows references to `u16` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &u16 {}
+
 /// Allows references to `u32` to be used as broadcast identifiers.
 impl BroadcastTypeTrait for &u32 {}
+
 /// Allows references to `u64` to be used as
 /// Implements `BroadcastTypeTrait` for `&u128`.
 ///
 /// This allows references to `u128` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &u128 {}
+
 /// Implements `BroadcastTypeTrait` for `&usize`.
 ///
 /// This allows references to `usize` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &usize {}
+
 /// Implements `BroadcastTypeTrait` for `&f32`.
 ///
 /// This allows references to `f32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &f32 {}
+
 /// Implements `BroadcastTypeTrait` for `&f64`.
 ///
 /// This allows references to `f64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &f64 {}
+
 /// Implements `BroadcastTypeTrait` for `&IpAddr`.
 ///
 /// This allows references to `IpAddr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &IpAddr {}
+
 /// Implements `BroadcastTypeTrait` for `&Ipv4Addr`.
 ///
 /// This allows references to `Ipv4Addr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &Ipv4Addr {}
+
 /// Implements `BroadcastTypeTrait` for `&Ipv6Addr`.
 ///
 /// This allows references to `Ipv6Addr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &Ipv6Addr {}
+
 /// Implements `BroadcastTypeTrait` for `&SocketAddr`.
 ///
 /// This allows references to `SocketAddr` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &SocketAddr {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroU8`.
 ///
 /// This allows references to `NonZeroU8` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroU8 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroU16`.
 ///
 /// This allows references to `NonZeroU16` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroU16 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroU32`.
 ///
 /// This allows references to `NonZeroU32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroU32 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroU64`.
 ///
 /// This allows references to `NonZeroU64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroU64 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroU128`.
 ///
 /// This allows references to `NonZeroU128` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroU128 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroUsize`.
 ///
 /// This allows references to `NonZeroUsize` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroUsize {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroI8`.
 ///
 /// This allows references to `NonZeroI8` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroI8 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroI16`.
 ///
 /// This allows references to `NonZeroI16` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroI16 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroI32`.
 ///
 /// This allows references to `NonZeroI32` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroI32 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroI64`.
 ///
 /// This allows references to `NonZeroI64` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroI64 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroI128`.
 ///
 /// This allows references to `NonZeroI128` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroI128 {}
+
 /// Implements `BroadcastTypeTrait` for `&NonZeroIsize`.
 ///
 /// This allows references to `NonZeroIsize` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for &NonZeroIsize {}
+
 /// Implements `BroadcastTypeTrait` for `&Infallible`.
 ///
 /// This allows references to `Infallible` to be used as a broadcast identifier.
@@ -248,7 +315,7 @@ impl<B: BroadcastTypeTrait> Default for WebSocketConfig<B> {
         let default_hook: ServerHookHandler = Arc::new(|_ctx| Box::pin(async {}));
         Self {
             context: Context::default(),
-            buffer_size: DEFAULT_BUFFER_SIZE,
+            request_config: RequestConfig::default(),
             capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
             broadcast_type: BroadcastType::default(),
             connected_hook: default_hook.clone(),
@@ -272,18 +339,18 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
 }
 
 impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
-    /// Sets the buffer size for the WebSocket connection.
+    /// Sets the request configuration for the WebSocket connection.
     ///
     /// # Arguments
     ///
-    /// - `usize` - The desired buffer size in bytes.
+    /// - `RequestConfig` - The request configuration to use for this WebSocket.
     ///
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
     #[inline(always)]
-    pub fn set_buffer_size(mut self, buffer_size: usize) -> Self {
-        self.buffer_size = buffer_size;
+    pub fn set_request_config(mut self, request_config: RequestConfig) -> Self {
+        self.request_config = request_config;
         self
     }
 
@@ -342,14 +409,14 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
         &self.context
     }
 
-    /// Retrieves the buffer size configured for the WebSocket connection.
+    /// Retrieves the request configuration for this WebSocket.
     ///
     /// # Returns
     ///
-    /// - `usize` - The buffer size in bytes.
+    /// - `RequestConfig` - The request configuration object.
     #[inline(always)]
-    pub fn get_buffer_size(&self) -> usize {
-        self.buffer_size
+    pub fn get_request_config(&self) -> RequestConfig {
+        self.request_config
     }
 
     /// Retrieves the capacity configured for the broadcast sender.
@@ -754,7 +821,7 @@ impl WebSocket {
         if ctx.to_string() == Context::default().to_string() {
             panic!("Context must be set");
         }
-        let buffer_size: usize = config.get_buffer_size();
+        let request_config: RequestConfig = config.get_request_config();
         let capacity: Capacity = config.get_capacity();
         let broadcast_type: BroadcastType<B> = config.get_broadcast_type().clone();
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
@@ -770,7 +837,7 @@ impl WebSocket {
         };
         loop {
             tokio::select! {
-                request_res = ctx.ws_from_stream(buffer_size) => {
+                request_res = ctx.ws_from_stream(request_config) => {
                     if request_res.is_ok() {
                         config.get_request_hook()(&ctx).await;
                     } else {

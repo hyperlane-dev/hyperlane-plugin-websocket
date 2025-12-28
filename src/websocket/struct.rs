@@ -27,10 +27,11 @@ pub struct WebSocketConfig<B: BroadcastTypeTrait> {
     ///
     /// This context is associated with this WebSocket connection.
     pub(super) context: Context,
-    /// The buffer size.
+    /// The request config.
     ///
-    /// This is the size of the buffer used for reading from the WebSocket stream.
-    pub(super) buffer_size: usize,
+    /// This configuration is used for managing WebSocket request processing,
+    /// including connection upgrade handling and request lifecycle management.
+    pub(super) request_config: RequestConfig,
     /// The capacity.
     ///
     /// This is the capacity of the broadcast sender channel.
