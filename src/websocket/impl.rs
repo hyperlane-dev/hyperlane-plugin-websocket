@@ -859,7 +859,7 @@ impl WebSocket {
                 msg_res = receiver.recv() => {
                     if let Ok(msg) = &msg_res {
                         let frame_list: Vec<ResponseBody> = WebSocketFrame::create_frame_list(msg);
-                        if ctx.send_body_list_with_data(&frame_list).await.is_ok() {
+                        if ctx.try_send_body_list_with_data(&frame_list).await.is_ok() {
                             continue;
                         }
                     }

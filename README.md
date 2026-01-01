@@ -122,8 +122,7 @@ impl ServerHook for UpgradeHook {
                 .set_response_body(&vec![])
                 .await
                 .send()
-                .await
-                .unwrap();
+                .await;
         }
     }
 }
@@ -174,7 +173,7 @@ impl ServerHook for ConnectedHook {
             "[connected_hook]receiver_count => {:?}",
             self.receiver_count
         );
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+        Server::flush_stdout();
     }
 }
 
@@ -197,7 +196,7 @@ impl ServerHook for GroupChatRequestHook {
     async fn handle(self, ctx: &Context) {
         ctx.set_response_body(&self.body).await;
         println!("[group_chat]receiver_count => {:?}", self.receiver_count);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+        Server::flush_stdout();
     }
 }
 
@@ -217,7 +216,7 @@ impl ServerHook for GroupClosedHook {
     async fn handle(self, ctx: &Context) {
         ctx.set_response_body(&self.body).await;
         println!("[group_closed]receiver_count => {:?}", self.receiver_count);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+        Server::flush_stdout();
     }
 }
 
@@ -241,7 +240,7 @@ impl ServerHook for PrivateChatRequestHook {
     async fn handle(self, ctx: &Context) {
         ctx.set_response_body(&self.body).await;
         println!("[private_chat]receiver_count => {:?}", self.receiver_count);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+        Server::flush_stdout();
     }
 }
 
@@ -265,7 +264,7 @@ impl ServerHook for PrivateClosedHook {
             "[private_closed]receiver_count => {:?}",
             self.receiver_count
         );
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+        Server::flush_stdout();
     }
 }
 
@@ -277,7 +276,7 @@ impl ServerHook for SendedHook {
 
     async fn handle(self, _ctx: &Context) {
         println!("[sended_hook]msg => {}", self.msg);
-        let _ = std::io::Write::flush(&mut std::io::stdout());
+        Server::flush_stdout();
     }
 }
 
@@ -337,8 +336,7 @@ impl ServerHook for ServerPanicHook {
     }
 
     async fn handle(self, ctx: &Context) {
-        let _ = ctx
-            .set_response_version(HttpVersion::Http1_1)
+        ctx.set_response_version(HttpVersion::Http1_1)
             .await
             .set_response_status_code(500)
             .await
@@ -355,6 +353,7 @@ impl ServerHook for ServerPanicHook {
     }
 }
 
+#[tokio::main]
 async fn main() {
     let server: Server = Server::new().await;
     let config: ServerConfig = ServerConfig::new().await;

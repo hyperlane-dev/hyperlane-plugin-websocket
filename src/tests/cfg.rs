@@ -94,8 +94,7 @@ async fn test_server() {
                     .set_response_body(&vec![])
                     .await
                     .send()
-                    .await
-                    .unwrap();
+                    .await;
             }
         }
     }
@@ -146,7 +145,7 @@ async fn test_server() {
                 "[connected_hook]receiver_count => {:?}",
                 self.receiver_count
             );
-            let _ = std::io::Write::flush(&mut std::io::stdout());
+            Server::flush_stdout();
         }
     }
 
@@ -169,7 +168,7 @@ async fn test_server() {
         async fn handle(self, ctx: &Context) {
             ctx.set_response_body(&self.body).await;
             println!("[group_chat]receiver_count => {:?}", self.receiver_count);
-            let _ = std::io::Write::flush(&mut std::io::stdout());
+            Server::flush_stdout();
         }
     }
 
@@ -189,7 +188,7 @@ async fn test_server() {
         async fn handle(self, ctx: &Context) {
             ctx.set_response_body(&self.body).await;
             println!("[group_closed]receiver_count => {:?}", self.receiver_count);
-            let _ = std::io::Write::flush(&mut std::io::stdout());
+            Server::flush_stdout();
         }
     }
 
@@ -213,7 +212,7 @@ async fn test_server() {
         async fn handle(self, ctx: &Context) {
             ctx.set_response_body(&self.body).await;
             println!("[private_chat]receiver_count => {:?}", self.receiver_count);
-            let _ = std::io::Write::flush(&mut std::io::stdout());
+            Server::flush_stdout();
         }
     }
 
@@ -237,7 +236,7 @@ async fn test_server() {
                 "[private_closed]receiver_count => {:?}",
                 self.receiver_count
             );
-            let _ = std::io::Write::flush(&mut std::io::stdout());
+            Server::flush_stdout();
         }
     }
 
@@ -249,7 +248,7 @@ async fn test_server() {
 
         async fn handle(self, _ctx: &Context) {
             println!("[sended_hook]msg => {}", self.msg);
-            let _ = std::io::Write::flush(&mut std::io::stdout());
+            Server::flush_stdout();
         }
     }
 
@@ -309,8 +308,7 @@ async fn test_server() {
         }
 
         async fn handle(self, ctx: &Context) {
-            let _ = ctx
-                .set_response_version(HttpVersion::Http1_1)
+            ctx.set_response_version(HttpVersion::Http1_1)
                 .await
                 .set_response_status_code(500)
                 .await
