@@ -390,7 +390,7 @@ impl ServerHook for PrivateChat {
 #[tokio::main]
 async fn main() {
     let server: Server = Server::new().await;
-    server.panic::<ServerPanic>().await;
+    server.task_panic::<ServerPanic>().await;
     server.request_error::<ServerRequestError>().await;
     server.request_middleware::<RequestMiddleware>().await;
     server.request_middleware::<UpgradeHook>().await;
