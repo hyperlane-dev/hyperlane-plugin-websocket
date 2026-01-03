@@ -6,12 +6,12 @@ fn get_broadcast_map() -> &'static WebSocket {
     BROADCAST_MAP.get_or_init(WebSocket::new)
 }
 
-struct TaskPanic {
+struct TaskPanicHook {
     response_body: String,
     content_type: String,
 }
 
-impl ServerHook for TaskPanic {
+impl ServerHook for TaskPanicHook {
     async fn new(ctx: &Context) -> Self {
         let error: PanicData = ctx.try_get_task_panic_data().await.unwrap_or_default();
         let response_body: String = error.to_string();
@@ -40,17 +40,15 @@ impl ServerHook for TaskPanic {
     }
 }
 
-struct RequestReadError {
+struct RequestErrorHook {
     response_status_code: ResponseStatusCode,
     response_body: String,
 }
 
-impl ServerHook for RequestReadError {
+impl ServerHook for RequestErrorHook {
     async fn new(ctx: &Context) -> Self {
-        let request_error: RequestError = ctx
-            .try_get_request_read_error_data()
-            .await
-            .unwrap_or_default();
+        let request_error: RequestError =
+            ctx.try_get_request_error_data().await.unwrap_or_default();
         Self {
             response_status_code: request_error.get_http_status_code(),
             response_body: request_error.to_string(),
@@ -362,8 +360,8 @@ impl ServerHook for PrivateChat {
 #[tokio::test]
 async fn main() {
     let server: Server = Server::new().await;
-    server.task_panic::<TaskPanic>().await;
-    server.request_read_error::<RequestReadError>().await;
+    server.task_panic::<TaskPanicHook>().await;
+    server.request_error::<RequestErrorHook>().await;
     server.request_middleware::<RequestMiddleware>().await;
     server.request_middleware::<UpgradeHook>().await;
     server.route::<GroupChat>("/{group_name}").await;
