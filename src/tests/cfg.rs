@@ -13,7 +13,7 @@ struct ServerPanic {
 
 impl ServerHook for ServerPanic {
     async fn new(ctx: &Context) -> Self {
-        let error: Panic = ctx.try_get_panic().await.unwrap_or_default();
+        let error: PanicData = ctx.try_get_panic_data().await.unwrap_or_default();
         let response_body: String = error.to_string();
         let content_type: String = ContentType::format_content_type_with_charset(TEXT_PLAIN, UTF8);
         Self {
@@ -40,15 +40,27 @@ impl ServerHook for ServerPanic {
     }
 }
 
-struct RequestError;
+struct ServerRequestError {
+    response_status_code: ResponseStatusCode,
+    response_body: String,
+}
 
-impl ServerHook for RequestError {
-    async fn new(_ctx: &Context) -> Self {
-        Self
+impl ServerHook for ServerRequestError {
+    async fn new(ctx: &Context) -> Self {
+        let request_error: RequestError =
+            ctx.try_get_request_error_data().await.unwrap_or_default();
+        Self {
+            response_status_code: request_error.get_http_status_code(),
+            response_body: request_error.to_string(),
+        }
     }
 
     async fn handle(self, ctx: &Context) {
         ctx.set_response_version(HttpVersion::Http1_1)
+            .await
+            .set_response_status_code(self.response_status_code)
+            .await
+            .set_response_body(self.response_body)
             .await
             .send()
             .await;
@@ -349,7 +361,7 @@ impl ServerHook for PrivateChat {
 async fn main() {
     let server: Server = Server::new().await;
     server.panic::<ServerPanic>().await;
-    server.request_error::<RequestError>().await;
+    server.request_error::<ServerRequestError>().await;
     server.request_middleware::<RequestMiddleware>().await;
     server.request_middleware::<UpgradeHook>().await;
     server.route::<GroupChat>("/{group_name}").await;
