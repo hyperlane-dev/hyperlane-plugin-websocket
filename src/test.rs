@@ -23,7 +23,8 @@ impl ServerHook for TaskPanicHook {
     }
 
     async fn handle(self, ctx: &Context) {
-        ctx.set_response_version(HttpVersion::Http1_1)
+        let send_result: Result<(), ResponseError> = ctx
+            .set_response_version(HttpVersion::Http1_1)
             .await
             .set_response_status_code(500)
             .await
@@ -35,8 +36,11 @@ impl ServerHook for TaskPanicHook {
             .await
             .set_response_body(&self.response_body)
             .await
-            .send()
+            .try_send()
             .await;
+        if send_result.is_err() {
+            ctx.aborted().await.closed().await;
+        }
     }
 }
 
@@ -56,14 +60,18 @@ impl ServerHook for RequestErrorHook {
     }
 
     async fn handle(self, ctx: &Context) {
-        ctx.set_response_version(HttpVersion::Http1_1)
+        let send_result: Result<(), ResponseError> = ctx
+            .set_response_version(HttpVersion::Http1_1)
             .await
             .set_response_status_code(self.response_status_code)
             .await
             .set_response_body(self.response_body)
             .await
-            .send()
+            .try_send()
             .await;
+        if send_result.is_err() {
+            ctx.aborted().await.closed().await;
+        }
     }
 }
 
@@ -108,7 +116,8 @@ impl ServerHook for UpgradeHook {
         }
         if let Some(key) = &ctx.try_get_request_header_back(SEC_WEBSOCKET_KEY).await {
             let accept_key: String = WebSocketFrame::generate_accept_key(key);
-            ctx.set_response_version(HttpVersion::Http1_1)
+            let send_result: Result<(), ResponseError> = ctx
+                .set_response_version(HttpVersion::Http1_1)
                 .await
                 .set_response_status_code(101)
                 .await
@@ -120,8 +129,11 @@ impl ServerHook for UpgradeHook {
                 .await
                 .set_response_body(&vec![])
                 .await
-                .send()
+                .try_send()
                 .await;
+            if send_result.is_err() {
+                ctx.aborted().await.closed().await;
+            }
         }
     }
 }
@@ -262,10 +274,10 @@ impl ServerHook for GroupChat {
         let group_name: String = ctx.try_get_route_param("group_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
         let config: WebSocketConfig<String> = WebSocketConfig::new()
+            .set_capacity(1024)
             .set_context(ctx.clone())
             .set_broadcast_type(key)
-            .set_request_config(RequestConfig::default())
-            .set_capacity(1024)
+            .set_request_config_data(RequestConfigData::default())
             .set_connected_hook::<ConnectedHook>()
             .set_request_hook::<GroupChatRequestHook>()
             .set_sended_hook::<SendedHook>()
@@ -341,10 +353,10 @@ impl ServerHook for PrivateChat {
         let your_name: String = ctx.try_get_route_param("your_name").await.unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
         let config: WebSocketConfig<String> = WebSocketConfig::new()
+            .set_capacity(1024)
             .set_context(ctx.clone())
             .set_broadcast_type(key)
-            .set_request_config(RequestConfig::default())
-            .set_capacity(1024)
+            .set_request_config_data(RequestConfigData::default())
             .set_connected_hook::<ConnectedHook>()
             .set_request_hook::<PrivateChatRequestHook>()
             .set_sended_hook::<SendedHook>()

@@ -256,15 +256,21 @@ impl BroadcastTypeTrait for &Infallible {}
 ///
 /// # Type Parameters
 ///
-/// - `B`: The type parameter for `BroadcastType`, which must implement `BroadcastTypeTrait`.
-impl<B: BroadcastTypeTrait> Default for BroadcastType<B> {
+/// - `BroadcastTypeTrait`: The type parameter for `BroadcastType`, which must implement `BroadcastTypeTrait`.
+impl<B> Default for BroadcastType<B>
+where
+    B: BroadcastTypeTrait,
+{
     #[inline(always)]
     fn default() -> Self {
         BroadcastType::Unknown
     }
 }
 
-impl<B: BroadcastTypeTrait> BroadcastType<B> {
+impl<B> BroadcastType<B>
+where
+    B: BroadcastTypeTrait,
+{
     /// Generates a unique key string for a given broadcast type.
     ///
     /// For point-to-point types, the keys are sorted to ensure consistent key generation
@@ -308,14 +314,17 @@ impl<B: BroadcastTypeTrait> BroadcastType<B> {
 ///
 /// # Type Parameters
 ///
-/// - `B`: The type parameter for `WebSocketConfig`, which must implement `BroadcastTypeTrait`.
-impl<B: BroadcastTypeTrait> Default for WebSocketConfig<B> {
+/// - `BroadcastTypeTrait`: The type parameter for `WebSocketConfig`, which must implement `BroadcastTypeTrait`.
+impl<B> Default for WebSocketConfig<B>
+where
+    B: BroadcastTypeTrait,
+{
     #[inline(always)]
     fn default() -> Self {
         let default_hook: ServerHookHandler = Arc::new(|_ctx| Box::pin(async {}));
         Self {
             context: Context::default(),
-            request_config: RequestConfig::default(),
+            request_config_data: RequestConfigData::default(),
             capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
             broadcast_type: BroadcastType::default(),
             connected_hook: default_hook.clone(),
@@ -326,7 +335,10 @@ impl<B: BroadcastTypeTrait> Default for WebSocketConfig<B> {
     }
 }
 
-impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
+impl<B> WebSocketConfig<B>
+where
+    B: BroadcastTypeTrait,
+{
     /// Creates a new WebSocket configuration with default values.
     ///
     /// # Returns
@@ -338,19 +350,22 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     }
 }
 
-impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
+impl<B> WebSocketConfig<B>
+where
+    B: BroadcastTypeTrait,
+{
     /// Sets the request configuration for the WebSocket connection.
     ///
     /// # Arguments
     ///
-    /// - `RequestConfig` - The request configuration to use for this WebSocket.
+    /// - `RequestConfigData` - The request configuration to use for this WebSocket.
     ///
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
     #[inline(always)]
-    pub fn set_request_config(mut self, request_config: RequestConfig) -> Self {
-        self.request_config = request_config;
+    pub fn set_request_config_data(mut self, request_config_data: RequestConfigData) -> Self {
+        self.request_config_data = request_config_data;
         self
     }
 
@@ -413,10 +428,10 @@ impl<B: BroadcastTypeTrait> WebSocketConfig<B> {
     ///
     /// # Returns
     ///
-    /// - `RequestConfig` - The request configuration object.
+    /// - `RequestConfigData` - The request configuration object.
     #[inline(always)]
-    pub fn get_request_config(&self) -> RequestConfig {
-        self.request_config
+    pub fn get_request_config_data(&self) -> RequestConfigData {
+        self.request_config_data
     }
 
     /// Retrieves the capacity configured for the broadcast sender.
@@ -629,7 +644,7 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
@@ -640,11 +655,14 @@ impl WebSocket {
     ///
     /// - `BroadcastMapReceiver<Vec<u8>>` - A broadcast map receiver for the specified broadcast type.
     #[inline(always)]
-    fn subscribe_unwrap_or_insert<B: BroadcastTypeTrait>(
+    fn subscribe_unwrap_or_insert<B>(
         &self,
         broadcast_type: BroadcastType<B>,
         capacity: Capacity,
-    ) -> BroadcastMapReceiver<Vec<u8>> {
+    ) -> BroadcastMapReceiver<Vec<u8>>
+    where
+        B: BroadcastTypeTrait,
+    {
         let key: String = BroadcastType::get_key(broadcast_type);
         self.broadcast_map.subscribe_or_insert(&key, capacity)
     }
@@ -653,24 +671,27 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
-    /// - `&B` - The first identifier for the point-to-point communication.
-    /// - `&B` - The second identifier for the point-to-point communication.
+    /// - `&BroadcastTypeTrait` - The first identifier for the point-to-point communication.
+    /// - `&BroadcastTypeTrait` - The second identifier for the point-to-point communication.
     /// - `Capacity` - The capacity for the broadcast sender.
     ///
     /// # Returns
     ///
     /// - `BroadcastMapReceiver<Vec<u8>>` - A broadcast map receiver for the point-to-point broadcast.
     #[inline(always)]
-    fn point_to_point<B: BroadcastTypeTrait>(
+    fn point_to_point<B>(
         &self,
         key1: &B,
         key2: &B,
         capacity: Capacity,
-    ) -> BroadcastMapReceiver<Vec<u8>> {
+    ) -> BroadcastMapReceiver<Vec<u8>>
+    where
+        B: BroadcastTypeTrait,
+    {
         self.subscribe_unwrap_or_insert(
             BroadcastType::PointToPoint(key1.clone(), key2.clone()),
             capacity,
@@ -681,22 +702,21 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
-    /// - `&B` - The identifier for the group.
+    /// - `&BroadcastTypeTrait` - The identifier for the group.
     /// - `Capacity` - The capacity for the broadcast sender.
     ///
     /// # Returns
     ///
     /// - `BroadcastMapReceiver<Vec<u8>>` - A broadcast map receiver for the point-to-group broadcast.
     #[inline(always)]
-    fn point_to_group<B: BroadcastTypeTrait>(
-        &self,
-        key: &B,
-        capacity: Capacity,
-    ) -> BroadcastMapReceiver<Vec<u8>> {
+    fn point_to_group<B>(&self, key: &B, capacity: Capacity) -> BroadcastMapReceiver<Vec<u8>>
+    where
+        B: BroadcastTypeTrait,
+    {
         self.subscribe_unwrap_or_insert(BroadcastType::PointToGroup(key.clone()), capacity)
     }
 
@@ -704,7 +724,7 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
@@ -714,10 +734,10 @@ impl WebSocket {
     ///
     /// - `ReceiverCount` - The number of active receivers for the broadcast type, or 0 if not found.
     #[inline(always)]
-    pub fn receiver_count<B: BroadcastTypeTrait>(
-        &self,
-        broadcast_type: BroadcastType<B>,
-    ) -> ReceiverCount {
+    pub fn receiver_count<B>(&self, broadcast_type: BroadcastType<B>) -> ReceiverCount
+    where
+        B: BroadcastTypeTrait,
+    {
         let key: String = BroadcastType::get_key(broadcast_type);
         self.broadcast_map.receiver_count(&key).unwrap_or(0)
     }
@@ -728,7 +748,7 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
@@ -738,10 +758,13 @@ impl WebSocket {
     ///
     /// - `ReceiverCount` - The receiver count after the connection is established.
     #[inline(always)]
-    pub fn receiver_count_before_connected<B: BroadcastTypeTrait>(
+    pub fn receiver_count_before_connected<B>(
         &self,
         broadcast_type: BroadcastType<B>,
-    ) -> ReceiverCount {
+    ) -> ReceiverCount
+    where
+        B: BroadcastTypeTrait,
+    {
         let count: ReceiverCount = self.receiver_count(broadcast_type);
         count.clamp(0, ReceiverCount::MAX - 1) + 1
     }
@@ -752,20 +775,20 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
-    /// - `BroadcastType<B>` - The broadcast type for which to get the receiver count.
+    /// - `BroadcastType<BroadcastTypeTrait>` - The broadcast type for which to get the receiver count.
     ///
     /// # Returns
     ///
     /// - `ReceiverCount` - The receiver count after the connection is closed.
     #[inline(always)]
-    pub fn receiver_count_after_closed<B: BroadcastTypeTrait>(
-        &self,
-        broadcast_type: BroadcastType<B>,
-    ) -> ReceiverCount {
+    pub fn receiver_count_after_closed<B>(&self, broadcast_type: BroadcastType<B>) -> ReceiverCount
+    where
+        B: BroadcastTypeTrait,
+    {
         let count: ReceiverCount = self.receiver_count(broadcast_type);
         count.clamp(1, ReceiverCount::MAX) - 1
     }
@@ -774,13 +797,13 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `T`: The type of data to send, which must be convertible to `Vec<u8>`.
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `Into<Vec<u8>>`: The type of data to send, which must be convertible to `Vec<u8>`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
-    /// - `BroadcastType<B>` - The broadcast type to which to send the data.
-    /// - `T` - The data to send.
+    /// - `BroadcastType<BroadcastTypeTrait>` - The broadcast type to which to send the data.
+    /// - `Into<Vec<u8>>` - The data to send.
     ///
     /// # Returns
     ///
@@ -806,42 +829,48 @@ impl WebSocket {
     ///
     /// # Type Parameters
     ///
-    /// - `B`: The type implementing `BroadcastTypeTrait`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
     ///
     /// # Arguments
     ///
-    /// - `WebSocketConfig<B>` - The WebSocket configuration containing the configuration for this WebSocket instance.
+    /// - `WebSocketConfig<BroadcastTypeTrait>` - The WebSocket configuration containing the configuration for this WebSocket instance.
     ///
     /// # Panics
     ///
     /// Panics if the context in the WebSocket configuration is not set (i.e., it's the default context).
     /// Panics if the broadcast type in the WebSocket configuration is `BroadcastType::Unknown`.
-    pub async fn run<B: BroadcastTypeTrait>(&self, config: WebSocketConfig<B>) {
-        let ctx: Context = config.get_context().clone();
+    pub async fn run<B>(&self, websocket_config: WebSocketConfig<B>)
+    where
+        B: BroadcastTypeTrait,
+    {
+        let ctx: Context = websocket_config.get_context().clone();
         if ctx.to_string() == Context::default().to_string() {
             panic!("Context must be set");
         }
-        let request_config: RequestConfig = config.get_request_config();
-        let capacity: Capacity = config.get_capacity();
-        let broadcast_type: BroadcastType<B> = config.get_broadcast_type().clone();
+        let request_config_data: RequestConfigData = websocket_config.get_request_config_data();
+        let capacity: Capacity = websocket_config.get_capacity();
+        let broadcast_type: BroadcastType<B> = websocket_config.get_broadcast_type().clone();
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2, capacity),
             BroadcastType::PointToGroup(key) => self.point_to_group(key, capacity),
             BroadcastType::Unknown => panic!("BroadcastType must be PointToPoint or PointToGroup"),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
-        config.get_connected_hook()(&ctx).await;
+        websocket_config.get_connected_hook()(&ctx).await;
+        let sended_hook: &ServerHookHandler = websocket_config.get_sended_hook();
+        let request_hook: &ServerHookHandler = websocket_config.get_request_hook();
+        let closed_hook: &ServerHookHandler = websocket_config.get_closed_hook();
         let result_handle = || async {
             ctx.aborted().await;
             ctx.closed().await;
         };
         loop {
             tokio::select! {
-                request_res = ctx.ws_from_stream(request_config) => {
+                request_res = ctx.ws_from_stream(&request_config_data) => {
                     if request_res.is_ok() {
-                        config.get_request_hook()(&ctx).await;
+                        request_hook(&ctx).await;
                     } else {
-                        config.get_closed_hook()(&ctx).await;
+                        closed_hook(&ctx).await;
                     }
                     if ctx.get_aborted().await {
                         continue;
@@ -851,16 +880,17 @@ impl WebSocket {
                     }
                     let body: ResponseBody = ctx.get_response_body().await;
                     let is_err: bool = self.broadcast_map.send(&key, body).is_err();
-                    config.get_sended_hook()(&ctx).await;
+                    sended_hook(&ctx).await;
                     if is_err || ctx.get_closed().await{
                         break;
                     }
                 },
                 msg_res = receiver.recv() => {
                     if let Ok(msg) = &msg_res {
-                        let frame_list: Vec<ResponseBody> = WebSocketFrame::create_frame_list(msg);
-                        if ctx.try_send_body_list_with_data(&frame_list).await.is_ok() {
+                        if ctx.try_send_body_list_with_data(&WebSocketFrame::create_frame_list(msg)).await.is_ok() {
                             continue;
+                        } else {
+                            break;
                         }
                     }
                     break;

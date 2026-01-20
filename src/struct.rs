@@ -31,7 +31,7 @@ pub struct WebSocketConfig<B: BroadcastTypeTrait> {
     ///
     /// This configuration is used for managing WebSocket request processing,
     /// including connection upgrade handling and request lifecycle management.
-    pub(super) request_config: RequestConfig,
+    pub(super) request_config_data: RequestConfigData,
     /// The capacity.
     ///
     /// This is the capacity of the broadcast sender channel.

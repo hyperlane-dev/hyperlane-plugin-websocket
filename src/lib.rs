@@ -4,13 +4,17 @@
 //! providing robust WebSocket communication capabilities and integrating
 //! with hyperlane-broadcast for efficient message dissemination.
 
+pub(crate) mod r#const;
+pub(crate) mod r#enum;
+pub(crate) mod r#impl;
+pub(crate) mod r#struct;
 #[cfg(test)]
-pub(crate) mod tests;
-pub(crate) mod websocket;
+pub(crate) mod test;
+pub(crate) mod r#trait;
 
-pub use websocket::{r#enum::*, r#struct::*};
+pub use {r#enum::*, r#struct::*};
 
-pub(crate) use websocket::{r#const::*, r#trait::*};
+pub(crate) use {r#const::*, r#trait::*};
 
 pub(crate) use std::{
     convert::Infallible,
