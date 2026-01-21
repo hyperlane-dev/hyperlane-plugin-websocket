@@ -4,19 +4,21 @@
 //! providing robust WebSocket communication capabilities and integrating
 //! with hyperlane-broadcast for efficient message dissemination.
 
-pub(crate) mod r#const;
-pub(crate) mod r#enum;
-pub(crate) mod r#impl;
-pub(crate) mod r#struct;
+mod r#const;
+mod r#enum;
+mod r#impl;
+mod r#struct;
 #[cfg(test)]
-pub(crate) mod test;
-pub(crate) mod r#trait;
+mod test;
+mod r#trait;
 
 pub use {r#enum::*, r#struct::*};
 
-pub(crate) use {r#const::*, r#trait::*};
+use {r#const::*, r#trait::*};
 
-pub(crate) use std::{
+#[cfg(test)]
+use std::sync::OnceLock;
+use std::{
     convert::Infallible,
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
     num::{
@@ -26,8 +28,7 @@ pub(crate) use std::{
     sync::Arc,
 };
 
-pub(crate) use hyperlane::{tokio::sync::broadcast::Receiver, *};
-pub(crate) use hyperlane_broadcast::*;
-
-#[cfg(test)]
-pub(crate) use std::sync::OnceLock;
+use {
+    hyperlane::{tokio::sync::broadcast::Receiver, *},
+    hyperlane_broadcast::*,
+};
