@@ -111,7 +111,7 @@ impl ServerHook for UpgradeHook {
     }
 
     async fn handle(self, ctx: &Context) {
-        if !ctx.get_request().await.is_ws() {
+        if !ctx.get_request_is_ws_upgrade_type().await {
             return;
         }
         if let Some(key) = &ctx.try_get_request_header_back(SEC_WEBSOCKET_KEY).await {
