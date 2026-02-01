@@ -1,6 +1,6 @@
 [package]
 name = "hyperlane-plugin-websocket"
-version = "6.0.7"
+version = "6.0.8"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
