@@ -4,7 +4,7 @@ use crate::*;
 ///
 /// This struct manages broadcast capabilities and holds the internal broadcast map
 /// responsible for handling message distribution to various WebSocket connections.
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct WebSocket {
     /// The internal broadcast map.
     ///

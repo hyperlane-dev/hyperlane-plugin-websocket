@@ -8,7 +8,7 @@ use crate::*;
 /// # Type Parameters
 ///
 /// - `T`: The type used to identify points or groups, which must implement `BroadcastTypeTrait`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum BroadcastType<T: BroadcastTypeTrait> {
     /// Indicates a point-to-point broadcast between two specific entities.
     ///
