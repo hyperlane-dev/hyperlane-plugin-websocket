@@ -29,6 +29,9 @@ use std::{
 };
 
 use {
-    hyperlane::{tokio::sync::broadcast::Receiver, *},
+    hyperlane::{
+        tokio::sync::broadcast::{Receiver, error::SendError},
+        *,
+    },
     hyperlane_broadcast::*,
 };

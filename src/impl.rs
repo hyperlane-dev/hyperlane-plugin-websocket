@@ -807,13 +807,13 @@ impl WebSocket {
     ///
     /// # Returns
     ///
-    /// - `BroadcastMapSendResult<Vec<u8>>` - A result indicating the success or failure of the send operation.
+    /// - `Result<Option<ReceiverCount>, SendError<Vec<u8>>>` - A result indicating the success or failure of the send operation.
     #[inline(always)]
     pub fn send<T, B>(
         &self,
         broadcast_type: BroadcastType<B>,
         data: T,
-    ) -> BroadcastMapSendResult<Vec<u8>>
+    ) -> Result<Option<ReceiverCount>, SendError<Vec<u8>>>
     where
         T: Into<Vec<u8>>,
         B: BroadcastTypeTrait,
