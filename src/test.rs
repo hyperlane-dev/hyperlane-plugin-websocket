@@ -172,13 +172,13 @@ impl ServerHook for ConnectedHook {
 
     async fn handle(self, _ctx: &Context) {
         get_broadcast_map()
-            .send(self.group_broadcast_type, self.data.clone())
+            .try_send(self.group_broadcast_type, self.data.clone())
             .unwrap_or_else(|err| {
                 println!("[connected_hook]send group error => {:?}", err.to_string());
                 None
             });
         get_broadcast_map()
-            .send(self.private_broadcast_type, self.data)
+            .try_send(self.private_broadcast_type, self.data)
             .unwrap_or_else(|err| {
                 println!(
                     "[connected_hook]send private error => {:?}",

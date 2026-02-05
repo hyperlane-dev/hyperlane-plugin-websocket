@@ -809,7 +809,7 @@ impl WebSocket {
     ///
     /// - `Result<Option<ReceiverCount>, SendError<Vec<u8>>>` - A result indicating the success or failure of the send operation.
     #[inline(always)]
-    pub fn send<T, B>(
+    pub fn try_send<T, B>(
         &self,
         broadcast_type: BroadcastType<B>,
         data: T,
@@ -819,7 +819,37 @@ impl WebSocket {
         B: BroadcastTypeTrait,
     {
         let key: String = BroadcastType::get_key(broadcast_type);
-        self.broadcast_map.send(&key, data.into())
+        self.broadcast_map.try_send(&key, data.into())
+    }
+
+    /// Sends data to all active receivers for a given broadcast type.
+    ///
+    /// This method panics if the send operation fails.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Into<Vec<u8>>`: The type of data to send, which must be convertible to `Vec<u8>`.
+    /// - `BroadcastTypeTrait`: The type implementing `BroadcastTypeTrait`.
+    ///
+    /// # Arguments
+    ///
+    /// - `BroadcastType<BroadcastTypeTrait>` - The broadcast type to which to send the data.
+    /// - `Into<Vec<u8>>` - The data to send.
+    ///
+    /// # Returns
+    ///
+    /// - `Option<ReceiverCount>` - The receiver count if the send operation succeeds.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the send operation fails.
+    #[inline(always)]
+    pub fn send<T, B>(&self, broadcast_type: BroadcastType<B>, data: T) -> Option<ReceiverCount>
+    where
+        T: Into<Vec<u8>>,
+        B: BroadcastTypeTrait,
+    {
+        self.try_send(broadcast_type, data).unwrap()
     }
 
     /// Runs the WebSocket connection, handling incoming requests and outgoing messages.
@@ -879,7 +909,7 @@ impl WebSocket {
                         break;
                     }
                     let body: ResponseBody = ctx.get_response_body().await;
-                    let is_err: bool = self.broadcast_map.send(&key, body).is_err();
+                    let is_err: bool = self.broadcast_map.try_send(&key, body).is_err();
                     sended_hook(&ctx).await;
                     if is_err || ctx.get_closed().await{
                         break;
