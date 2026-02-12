@@ -174,20 +174,20 @@ impl ServerHook for ConnectedHook {
         get_broadcast_map()
             .try_send(self.group_broadcast_type, self.data.clone())
             .unwrap_or_else(|err| {
-                println!("[connected_hook]send group error => {:?}", err.to_string());
+                println!("[connected_hook] send group error => {:?}", err.to_string());
                 None
             });
         get_broadcast_map()
             .try_send(self.private_broadcast_type, self.data)
             .unwrap_or_else(|err| {
                 println!(
-                    "[connected_hook]send private error => {:?}",
+                    "[connected_hook] send private error => {:?}",
                     err.to_string()
                 );
                 None
             });
         println!(
-            "[connected_hook]receiver_count => {:?}",
+            "[connected_hook] receiver_count => {:?}",
             self.receiver_count
         );
         Server::flush_stdout();
@@ -205,7 +205,7 @@ impl ServerHook for SendedHook {
     }
 
     async fn handle(self, _ctx: &Context) {
-        println!("[sended_hook]msg => {}", self.msg);
+        println!("[sended_hook] msg => {}", self.msg);
         Server::flush_stdout();
     }
 }
@@ -233,7 +233,7 @@ impl ServerHook for GroupChatRequestHook {
 
     async fn handle(self, ctx: &Context) {
         ctx.set_response_body(&self.body).await;
-        println!("[group_chat]receiver_count => {:?}", self.receiver_count);
+        println!("[group_chat] receiver_count => {:?}", self.receiver_count);
         Server::flush_stdout();
     }
 }
@@ -258,7 +258,7 @@ impl ServerHook for GroupClosedHook {
 
     async fn handle(self, ctx: &Context) {
         ctx.set_response_body(&self.body).await;
-        println!("[group_closed]receiver_count => {:?}", self.receiver_count);
+        println!("[group_closed] receiver_count => {:?}", self.receiver_count);
         Server::flush_stdout();
     }
 }
@@ -277,7 +277,6 @@ impl ServerHook for GroupChat {
             .set_capacity(1024)
             .set_context(ctx.clone())
             .set_broadcast_type(key)
-            .set_request_config_data(RequestConfigData::default())
             .set_connected_hook::<ConnectedHook>()
             .set_request_hook::<GroupChatRequestHook>()
             .set_sended_hook::<SendedHook>()
@@ -310,7 +309,7 @@ impl ServerHook for PrivateChatRequestHook {
 
     async fn handle(self, ctx: &Context) {
         ctx.set_response_body(&self.body).await;
-        println!("[private_chat]receiver_count => {:?}", self.receiver_count);
+        println!("[private_chat] receiver_count => {:?}", self.receiver_count);
         Server::flush_stdout();
     }
 }
@@ -336,7 +335,7 @@ impl ServerHook for PrivateClosedHook {
     async fn handle(self, ctx: &Context) {
         ctx.set_response_body(&self.body).await;
         println!(
-            "[private_closed]receiver_count => {:?}",
+            "[private_closed] receiver_count => {:?}",
             self.receiver_count
         );
         Server::flush_stdout();
@@ -356,7 +355,6 @@ impl ServerHook for PrivateChat {
             .set_capacity(1024)
             .set_context(ctx.clone())
             .set_broadcast_type(key)
-            .set_request_config_data(RequestConfigData::default())
             .set_connected_hook::<ConnectedHook>()
             .set_request_hook::<PrivateChatRequestHook>()
             .set_sended_hook::<SendedHook>()

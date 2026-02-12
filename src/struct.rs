@@ -27,11 +27,6 @@ pub struct WebSocketConfig<B: BroadcastTypeTrait> {
     ///
     /// This context is associated with this WebSocket connection.
     pub(super) context: Context,
-    /// The request config.
-    ///
-    /// This configuration is used for managing WebSocket request processing,
-    /// including connection upgrade handling and request lifecycle management.
-    pub(super) request_config_data: RequestConfigData,
     /// The capacity.
     ///
     /// This is the capacity of the broadcast sender channel.

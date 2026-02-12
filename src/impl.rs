@@ -324,7 +324,6 @@ where
         let default_hook: ServerHookHandler = Arc::new(|_ctx| Box::pin(async {}));
         Self {
             context: Context::default(),
-            request_config_data: RequestConfigData::default(),
             capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
             broadcast_type: BroadcastType::default(),
             connected_hook: default_hook.clone(),
@@ -354,21 +353,6 @@ impl<B> WebSocketConfig<B>
 where
     B: BroadcastTypeTrait,
 {
-    /// Sets the request configuration for the WebSocket connection.
-    ///
-    /// # Arguments
-    ///
-    /// - `RequestConfigData` - The request configuration to use for this WebSocket.
-    ///
-    /// # Returns
-    ///
-    /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
-    #[inline(always)]
-    pub fn set_request_config_data(mut self, request_config_data: RequestConfigData) -> Self {
-        self.request_config_data = request_config_data;
-        self
-    }
-
     /// Sets the capacity for the broadcast sender.
     ///
     /// # Arguments
@@ -422,16 +406,6 @@ where
     #[inline(always)]
     pub fn get_context(&self) -> &Context {
         &self.context
-    }
-
-    /// Retrieves the request configuration for this WebSocket.
-    ///
-    /// # Returns
-    ///
-    /// - `RequestConfigData` - The request configuration object.
-    #[inline(always)]
-    pub fn get_request_config_data(&self) -> RequestConfigData {
-        self.request_config_data
     }
 
     /// Retrieves the capacity configured for the broadcast sender.
@@ -877,7 +851,6 @@ impl WebSocket {
         if ctx.to_string() == Context::default().to_string() {
             panic!("Context must be set");
         }
-        let request_config_data: RequestConfigData = websocket_config.get_request_config_data();
         let capacity: Capacity = websocket_config.get_capacity();
         let broadcast_type: BroadcastType<B> = websocket_config.get_broadcast_type().clone();
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
@@ -896,10 +869,12 @@ impl WebSocket {
         };
         loop {
             tokio::select! {
-                request_res = ctx.ws_from_stream(&request_config_data) => {
+                request_res = ctx.ws_from_stream() => {
+                    let mut is_err: bool = false;
                     if request_res.is_ok() {
                         request_hook(&ctx).await;
                     } else {
+                        is_err = true;
                         closed_hook(&ctx).await;
                     }
                     if ctx.get_aborted().await {
@@ -909,7 +884,7 @@ impl WebSocket {
                         break;
                     }
                     let body: ResponseBody = ctx.get_response_body().await;
-                    let is_err: bool = self.broadcast_map.try_send(&key, body).is_err();
+                    is_err = self.broadcast_map.try_send(&key, body).is_err() || is_err;
                     sended_hook(&ctx).await;
                     if is_err || ctx.get_closed().await{
                         break;
