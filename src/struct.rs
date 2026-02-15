@@ -21,12 +21,11 @@ pub struct WebSocket {
 /// # Type Parameters
 ///
 /// - `B`: The type used for broadcast keys, which must implement `BroadcastTypeTrait`.
-#[derive(Clone)]
-pub struct WebSocketConfig<B: BroadcastTypeTrait> {
+pub struct WebSocketConfig<'a, B: BroadcastTypeTrait> {
     /// The Hyperlane context.
     ///
     /// This context is associated with this WebSocket connection.
-    pub(super) context: Context,
+    pub(super) context: &'a mut Context,
     /// The capacity.
     ///
     /// This is the capacity of the broadcast sender channel.

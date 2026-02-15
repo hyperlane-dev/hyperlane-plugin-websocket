@@ -307,49 +307,34 @@ where
     }
 }
 
-/// Implements the `Default` trait for `WebSocketConfig`.
-///
-/// Provides a default configuration for WebSocket connections, including
-/// default hook types that do nothing.
-///
-/// # Type Parameters
-///
-/// - `BroadcastTypeTrait`: The type parameter for `WebSocketConfig`, which must implement `BroadcastTypeTrait`.
-impl<B> Default for WebSocketConfig<B>
+impl<'a, B> WebSocketConfig<'a, B>
 where
     B: BroadcastTypeTrait,
 {
-    #[inline(always)]
-    fn default() -> Self {
-        let default_hook: ServerHookHandler = Arc::new(|_ctx| Box::pin(async {}));
-        Self {
-            context: Context::default(),
-            capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
-            broadcast_type: BroadcastType::default(),
-            connected_hook: default_hook.clone(),
-            request_hook: default_hook.clone(),
-            sended_hook: default_hook.clone(),
-            closed_hook: default_hook,
-        }
-    }
-}
-
-impl<B> WebSocketConfig<B>
-where
-    B: BroadcastTypeTrait,
-{
-    /// Creates a new WebSocket configuration with default values.
+    /// Creates a new WebSocket configuration with the given context.
+    ///
+    /// # Arguments
+    ///
+    /// - `&mut Context` - The context object to associate with the WebSocket.
     ///
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - A new WebSocket configuration instance.
     #[inline(always)]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(context: &'a mut Context) -> Self {
+        Self {
+            context,
+            capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
+            broadcast_type: BroadcastType::default(),
+            connected_hook: default_server_hook_handler(),
+            request_hook: default_server_hook_handler(),
+            sended_hook: default_server_hook_handler(),
+            closed_hook: default_server_hook_handler(),
+        }
     }
 }
 
-impl<B> WebSocketConfig<B>
+impl<'a, B> WebSocketConfig<'a, B>
 where
     B: BroadcastTypeTrait,
 {
@@ -372,13 +357,13 @@ where
     ///
     /// # Arguments
     ///
-    /// - `Context` - The context object to associate with the WebSocket.
+    /// - `&mut Context` - The context object to associate with the WebSocket.
     ///
     /// # Returns
     ///
     /// - `WebSocketConfig<B>` - The modified WebSocket configuration instance.
     #[inline(always)]
-    pub fn set_context(mut self, context: Context) -> Self {
+    pub fn set_context(mut self, context: &'a mut Context) -> Self {
         self.context = context;
         self
     }
@@ -402,10 +387,10 @@ where
     ///
     /// # Returns
     ///
-    /// - `&Context` - A reference to the context object.
+    /// - `&mut Context` - A reference to the context object.
     #[inline(always)]
-    pub fn get_context(&self) -> &Context {
-        &self.context
+    pub fn get_context(&mut self) -> &mut Context {
+        self.context
     }
 
     /// Retrieves the capacity configured for the broadcast sender.
@@ -843,50 +828,44 @@ impl WebSocket {
     ///
     /// Panics if the context in the WebSocket configuration is not set (i.e., it's the default context).
     /// Panics if the broadcast type in the WebSocket configuration is `BroadcastType::Unknown`.
-    pub async fn run<B>(&self, websocket_config: WebSocketConfig<B>)
+    pub async fn run<B>(&self, mut websocket_config: WebSocketConfig<'_, B>)
     where
         B: BroadcastTypeTrait,
     {
-        let ctx: Context = websocket_config.get_context().clone();
-        if ctx.to_string() == Context::default().to_string() {
-            panic!("Context must be set");
-        }
         let capacity: Capacity = websocket_config.get_capacity();
         let broadcast_type: BroadcastType<B> = websocket_config.get_broadcast_type().clone();
+        let connected_hook: ServerHookHandler = websocket_config.get_connected_hook().clone();
+        let sended_hook: ServerHookHandler = websocket_config.get_sended_hook().clone();
+        let request_hook: ServerHookHandler = websocket_config.get_request_hook().clone();
+        let closed_hook: ServerHookHandler = websocket_config.get_closed_hook().clone();
+        let ctx: &mut Context = websocket_config.get_context();
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2, capacity),
             BroadcastType::PointToGroup(key) => self.point_to_group(key, capacity),
             BroadcastType::Unknown => panic!("BroadcastType must be PointToPoint or PointToGroup"),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
-        websocket_config.get_connected_hook()(&ctx).await;
-        let sended_hook: &ServerHookHandler = websocket_config.get_sended_hook();
-        let request_hook: &ServerHookHandler = websocket_config.get_request_hook();
-        let closed_hook: &ServerHookHandler = websocket_config.get_closed_hook();
-        let result_handle = || async {
-            ctx.aborted().await;
-            ctx.closed().await;
-        };
+        connected_hook(ctx).await;
         loop {
             tokio::select! {
                 request_res = ctx.ws_from_stream() => {
                     let mut is_err: bool = false;
                     if request_res.is_ok() {
-                        request_hook(&ctx).await;
+                        request_hook(ctx).await;
                     } else {
                         is_err = true;
-                        closed_hook(&ctx).await;
+                        closed_hook(ctx).await;
                     }
-                    if ctx.get_aborted().await {
+                    if ctx.get_aborted() {
                         continue;
                     }
-                    if ctx.get_closed().await {
+                    if ctx.get_closed() {
                         break;
                     }
-                    let body: ResponseBody = ctx.get_response_body().await;
+                    let body: ResponseBody = ctx.get_response().get_body().clone();
                     is_err = self.broadcast_map.try_send(&key, body).is_err() || is_err;
-                    sended_hook(&ctx).await;
-                    if is_err || ctx.get_closed().await{
+                    sended_hook(ctx).await;
+                    if is_err || ctx.get_closed() {
                         break;
                     }
                 },
@@ -902,6 +881,6 @@ impl WebSocket {
                 }
             }
         }
-        result_handle().await;
+        ctx.set_aborted(true).set_closed(true);
     }
 }
