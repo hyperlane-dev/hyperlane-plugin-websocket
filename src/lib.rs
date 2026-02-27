@@ -16,8 +16,6 @@ pub use {r#enum::*, r#struct::*};
 
 use {r#const::*, r#trait::*};
 
-#[cfg(test)]
-use std::sync::OnceLock;
 use std::{
     convert::Infallible,
     net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr},
@@ -26,7 +24,11 @@ use std::{
         NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
     },
 };
+#[cfg(test)]
+use std::{sync::OnceLock, time::Duration};
 
+#[cfg(test)]
+use tokio::{spawn, time::sleep};
 use {
     hyperlane::{
         tokio::sync::broadcast::{Receiver, error::SendError},
