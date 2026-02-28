@@ -1,6 +1,6 @@
 [package]
 name = "hyperlane-plugin-websocket"
-version = "11.0.0"
+version = "11.0.1"
 readme = "README.md"
 edition = "2024"
 authors = ["root@ltpp.vip"]
@@ -12,7 +12,7 @@ categories = ["network-programming", "web-programming"]
 exclude = ["target", "Cargo.lock", "sh", ".github"]
 
 [dependencies]
-hyperlane = "18.0.0"
+hyperlane = "18.0.1"
 hyperlane-broadcast = "2.0.1"
 
 [profile.dev]
