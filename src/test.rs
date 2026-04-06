@@ -110,7 +110,7 @@ impl ServerHook for UpgradeHook {
                 .set_header(UPGRADE, WEBSOCKET)
                 .set_header(CONNECTION, UPGRADE)
                 .set_header(SEC_WEBSOCKET_ACCEPT, &accept_key)
-                .set_body(vec![]);
+                .set_body(Vec::new());
             if ctx.try_send().await.is_err() {
                 ctx.set_aborted(true).set_closed(true);
             }
