@@ -858,27 +858,20 @@ impl WebSocket {
         if connected_hook(stream, ctx).await.is_reject() {
             return;
         }
+        let mut is_reject: bool;
         loop {
             tokio::select! {
                 request_res = stream.try_get_websocket_request() => {
-                    let mut is_err: bool = if let Ok(body) = request_res {
+                    if let Ok(body) = request_res {
                         ctx.get_mut_request().set_body(body);
-                        false
+                        is_reject = request_hook(stream, ctx).await.is_reject();
                     } else {
-                        true
-                    };
-                    if is_err && closed_hook(stream, ctx).await.is_reject() {
-                        continue;
-                    }
-                    if !is_err && request_hook(stream, ctx).await.is_reject() {
-                        continue;
-                    }
-                    if stream.get_closed() {
-                        break;
+                        is_reject = true;
+                        closed_hook(stream, ctx).await;
                     }
                     let body: ResponseBody = ctx.get_response().get_body().clone();
-                    is_err = self.broadcast_map.try_send(&key, body).is_err() || is_err;
-                    if is_err || sended_hook(stream, ctx).await.is_reject() {
+                    let is_err: bool = self.broadcast_map.try_send(&key, body).is_err();
+                    if is_err || sended_hook(stream, ctx).await.is_reject() || is_reject {
                         break;
                     }
                 },
