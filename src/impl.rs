@@ -321,8 +321,9 @@ where
     ///
     /// - `WebSocketConfig<B>` - A new WebSocket configuration instance.
     #[inline(always)]
-    pub fn new(context: &'a mut Context) -> Self {
+    pub fn new(stream: &'a mut Stream, context: &'a mut Context) -> Self {
         Self {
+            stream,
             context,
             capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
             broadcast_type: BroadcastType::default(),
@@ -381,6 +382,11 @@ where
     pub fn set_broadcast_type(mut self, broadcast_type: BroadcastType<B>) -> Self {
         self.broadcast_type = broadcast_type;
         self
+    }
+
+    #[inline(always)]
+    pub fn get_stream(&mut self) -> &mut Stream {
+        self.stream
     }
 
     /// Retrieves a reference to the context associated with this configuration.
@@ -828,7 +834,7 @@ impl WebSocket {
     ///
     /// Panics if the context in the WebSocket configuration is not set (i.e., it's the default context).
     /// Panics if the broadcast type in the WebSocket configuration is `BroadcastType::Unknown`.
-    pub async fn run<B>(&self, mut websocket_config: WebSocketConfig<'_, B>)
+    pub async fn run<B>(&self, websocket_config: WebSocketConfig<'_, B>)
     where
         B: BroadcastTypeTrait,
     {
@@ -838,40 +844,47 @@ impl WebSocket {
         let sended_hook: ServerHookHandler = websocket_config.get_sended_hook().clone();
         let request_hook: ServerHookHandler = websocket_config.get_request_hook().clone();
         let closed_hook: ServerHookHandler = websocket_config.get_closed_hook().clone();
-        let ctx: &mut Context = websocket_config.get_context();
+        let WebSocketConfig {
+            stream,
+            context: ctx,
+            ..
+        } = websocket_config;
         let mut receiver: Receiver<Vec<u8>> = match &broadcast_type {
             BroadcastType::PointToPoint(key1, key2) => self.point_to_point(key1, key2, capacity),
             BroadcastType::PointToGroup(key) => self.point_to_group(key, capacity),
             BroadcastType::Unknown => panic!("BroadcastType must be PointToPoint or PointToGroup"),
         };
         let key: String = BroadcastType::get_key(broadcast_type);
-        connected_hook(ctx).await;
+        if connected_hook(stream, ctx).await.is_reject() {
+            return;
+        }
         loop {
             tokio::select! {
-                request_res = ctx.ws_from_stream() => {
-                    let mut is_err: bool = false;
-                    if request_res.is_ok() {
-                        request_hook(ctx).await;
+                request_res = stream.try_get_websocket_request() => {
+                    let mut is_err: bool = if let Ok(body) = request_res {
+                        ctx.get_mut_request().set_body(body);
+                        false
                     } else {
-                        is_err = true;
-                        closed_hook(ctx).await;
-                    }
-                    if ctx.get_aborted() {
+                        true
+                    };
+                    if is_err && closed_hook(stream, ctx).await.is_reject() {
                         continue;
                     }
-                    if ctx.get_closed() {
+                    if !is_err && request_hook(stream, ctx).await.is_reject() {
+                        continue;
+                    }
+                    if stream.get_closed() {
                         break;
                     }
                     let body: ResponseBody = ctx.get_response().get_body().clone();
                     is_err = self.broadcast_map.try_send(&key, body).is_err() || is_err;
-                    sended_hook(ctx).await;
-                    if is_err || ctx.get_closed() {
+                    if is_err || sended_hook(stream, ctx).await.is_reject() {
                         break;
                     }
                 },
                 msg_res = receiver.recv() => {
                     if let Ok(msg) = &msg_res {
-                        if ctx.try_send_body_list_with_data(&WebSocketFrame::create_frame_list(msg)).await.is_ok() {
+                        if stream.try_send_list(&WebSocketFrame::create_frame_list(msg)).await.is_ok() {
                             continue;
                         } else {
                             break;
@@ -881,6 +894,6 @@ impl WebSocket {
                 }
             }
         }
-        ctx.set_aborted(true).set_closed(true);
+        stream.set_closed(true);
     }
 }

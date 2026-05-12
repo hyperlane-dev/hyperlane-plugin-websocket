@@ -22,6 +22,8 @@ pub struct WebSocket {
 ///
 /// - `B`: The type used for broadcast keys, which must implement `BroadcastTypeTrait`.
 pub struct WebSocketConfig<'a, B: BroadcastTypeTrait> {
+    /// The underlying stream for this WebSocket connection.
+    pub(super) stream: &'a mut Stream,
     /// The Hyperlane context.
     ///
     /// This context is associated with this WebSocket connection.
