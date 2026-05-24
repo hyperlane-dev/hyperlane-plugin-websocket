@@ -8,8 +8,6 @@ mod r#const;
 mod r#enum;
 mod r#impl;
 mod r#struct;
-#[cfg(test)]
-mod test;
 mod r#trait;
 
 pub use {r#enum::*, r#struct::*};
@@ -24,11 +22,6 @@ use std::{
         NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
     },
 };
-#[cfg(test)]
-use std::{sync::OnceLock, time::Duration};
-
-#[cfg(test)]
-use tokio::{spawn, time::sleep};
 use {
     hyperlane::{
         tokio::sync::broadcast::{Receiver, error::SendError},

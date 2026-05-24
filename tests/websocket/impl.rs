@@ -1,16 +1,5 @@
 use crate::*;
 
-static BROADCAST_MAP: OnceLock<WebSocket> = OnceLock::new();
-
-fn get_broadcast_map() -> &'static WebSocket {
-    BROADCAST_MAP.get_or_init(WebSocket::new)
-}
-
-struct TaskPanicHook {
-    response_body: String,
-    content_type: String,
-}
-
 impl ServerHook for TaskPanicHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {
         let error: PanicData = ctx.try_get_task_panic_data().unwrap_or_default();
@@ -40,11 +29,6 @@ impl ServerHook for TaskPanicHook {
     }
 }
 
-struct RequestErrorHook {
-    response_status_code: ResponseStatusCode,
-    response_body: String,
-}
-
 impl ServerHook for RequestErrorHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {
         let request_error: RequestError = ctx.try_get_request_error_data().unwrap_or_default();
@@ -69,10 +53,6 @@ impl ServerHook for RequestErrorHook {
     }
 }
 
-struct RequestMiddleware {
-    socket_addr: String,
-}
-
 impl ServerHook for RequestMiddleware {
     async fn new(stream: &mut Stream, _: &mut Context) -> Self {
         let socket_addr: String = stream
@@ -95,8 +75,6 @@ impl ServerHook for RequestMiddleware {
         Status::Continue
     }
 }
-
-struct UpgradeHook;
 
 impl ServerHook for UpgradeHook {
     async fn new(_: &mut Stream, _: &mut Context) -> Self {
@@ -127,25 +105,20 @@ impl ServerHook for UpgradeHook {
     }
 }
 
-struct ConnectedHook {
-    receiver_count: ReceiverCount,
-    data: String,
-    group_broadcast_type: BroadcastType<String>,
-    private_broadcast_type: BroadcastType<String>,
-}
-
 impl ServerHook for ConnectedHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {
         let group_name: String = ctx.try_get_route_param("group_name").unwrap_or_default();
         let group_broadcast_type: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
-        let group_receiver_count: ReceiverCount =
-            get_broadcast_map().receiver_count(group_broadcast_type.clone());
+        let group_receiver_count: ReceiverCount = BROADCAST_MAP
+            .get_or_init(WebSocket::new)
+            .receiver_count(group_broadcast_type.clone());
         let my_name: String = ctx.try_get_route_param("my_name").unwrap_or_default();
         let your_name: String = ctx.try_get_route_param("your_name").unwrap_or_default();
         let private_broadcast_type: BroadcastType<String> =
             BroadcastType::PointToPoint(my_name, your_name);
-        let private_receiver_count: ReceiverCount =
-            get_broadcast_map().receiver_count(private_broadcast_type.clone());
+        let private_receiver_count: ReceiverCount = BROADCAST_MAP
+            .get_or_init(WebSocket::new)
+            .receiver_count(private_broadcast_type.clone());
         let receiver_count: usize = if group_receiver_count > 0 {
             group_receiver_count
         } else {
@@ -161,13 +134,15 @@ impl ServerHook for ConnectedHook {
     }
 
     async fn handle(self, _: &mut Stream, _: &mut Context) -> Status {
-        get_broadcast_map()
+        BROADCAST_MAP
+            .get_or_init(WebSocket::new)
             .try_send(self.group_broadcast_type, self.data.clone())
             .unwrap_or_else(|err| {
                 println!("[connected_hook] send group error => {:?}", err.to_string());
                 None
             });
-        get_broadcast_map()
+        BROADCAST_MAP
+            .get_or_init(WebSocket::new)
             .try_send(self.private_broadcast_type, self.data)
             .unwrap_or_else(|err| {
                 println!(
@@ -185,10 +160,6 @@ impl ServerHook for ConnectedHook {
     }
 }
 
-struct SendedHook {
-    msg: String,
-}
-
 impl ServerHook for SendedHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {
         let msg: String = ctx.get_response().get_body_string();
@@ -202,19 +173,18 @@ impl ServerHook for SendedHook {
     }
 }
 
-struct GroupChatRequestHook {
-    body: RequestBody,
-    receiver_count: ReceiverCount,
-}
-
 impl ServerHook for GroupChatRequestHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {
         let group_name: String = ctx.try_get_route_param("group_name").unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
-        let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
+        let mut receiver_count: ReceiverCount = BROADCAST_MAP
+            .get_or_init(WebSocket::new)
+            .receiver_count(key.clone());
         let mut body: RequestBody = ctx.get_request().get_body().clone();
         if body.is_empty() {
-            receiver_count = get_broadcast_map().receiver_count_after_closed(key);
+            receiver_count = BROADCAST_MAP
+                .get_or_init(WebSocket::new)
+                .receiver_count_after_closed(key);
             body = format!("receiver_count => {receiver_count:?}").into();
         }
         Self {
@@ -231,17 +201,13 @@ impl ServerHook for GroupChatRequestHook {
     }
 }
 
-struct GroupClosedHook {
-    body: String,
-    receiver_count: ReceiverCount,
-}
-
 impl ServerHook for GroupClosedHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {
         let group_name: String = ctx.try_get_route_param("group_name").unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToGroup(group_name);
-        let receiver_count: ReceiverCount =
-            get_broadcast_map().receiver_count_after_closed(key.clone());
+        let receiver_count: ReceiverCount = BROADCAST_MAP
+            .get_or_init(WebSocket::new)
+            .receiver_count_after_closed(key.clone());
         let body: String = format!("receiver_count => {receiver_count:?}");
         Self {
             body,
@@ -256,8 +222,6 @@ impl ServerHook for GroupClosedHook {
         Status::Continue
     }
 }
-
-struct GroupChat;
 
 impl ServerHook for GroupChat {
     async fn new(_: &mut Stream, _: &mut Context) -> Self {
@@ -274,14 +238,9 @@ impl ServerHook for GroupChat {
             .set_request_hook::<GroupChatRequestHook>()
             .set_sended_hook::<SendedHook>()
             .set_closed_hook::<GroupClosedHook>();
-        get_broadcast_map().run(config).await;
+        BROADCAST_MAP.get_or_init(WebSocket::new).run(config).await;
         Status::Continue
     }
-}
-
-struct PrivateChatRequestHook {
-    body: RequestBody,
-    receiver_count: ReceiverCount,
 }
 
 impl ServerHook for PrivateChatRequestHook {
@@ -289,10 +248,14 @@ impl ServerHook for PrivateChatRequestHook {
         let my_name: String = ctx.try_get_route_param("my_name").unwrap();
         let your_name: String = ctx.try_get_route_param("your_name").unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
-        let mut receiver_count: ReceiverCount = get_broadcast_map().receiver_count(key.clone());
+        let mut receiver_count: ReceiverCount = BROADCAST_MAP
+            .get_or_init(WebSocket::new)
+            .receiver_count(key.clone());
         let mut body: RequestBody = ctx.get_request().get_body().clone();
         if body.is_empty() {
-            receiver_count = get_broadcast_map().receiver_count_after_closed(key);
+            receiver_count = BROADCAST_MAP
+                .get_or_init(WebSocket::new)
+                .receiver_count_after_closed(key);
             body = format!("receiver_count => {receiver_count:?}").into();
         }
         Self {
@@ -309,17 +272,14 @@ impl ServerHook for PrivateChatRequestHook {
     }
 }
 
-struct PrivateClosedHook {
-    body: String,
-    receiver_count: ReceiverCount,
-}
-
 impl ServerHook for PrivateClosedHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {
         let my_name: String = ctx.try_get_route_param("my_name").unwrap();
         let your_name: String = ctx.try_get_route_param("your_name").unwrap();
         let key: BroadcastType<String> = BroadcastType::PointToPoint(my_name, your_name);
-        let receiver_count: ReceiverCount = get_broadcast_map().receiver_count_after_closed(key);
+        let receiver_count: ReceiverCount = BROADCAST_MAP
+            .get_or_init(WebSocket::new)
+            .receiver_count_after_closed(key);
         let body: String = format!("receiver_count => {receiver_count:?}");
         Self {
             body,
@@ -338,8 +298,6 @@ impl ServerHook for PrivateClosedHook {
     }
 }
 
-struct PrivateChat;
-
 impl ServerHook for PrivateChat {
     async fn new(_: &mut Stream, _: &mut Context) -> Self {
         Self
@@ -356,27 +314,7 @@ impl ServerHook for PrivateChat {
             .set_request_hook::<PrivateChatRequestHook>()
             .set_sended_hook::<SendedHook>()
             .set_closed_hook::<PrivateClosedHook>();
-        get_broadcast_map().run(config).await;
+        BROADCAST_MAP.get_or_init(WebSocket::new).run(config).await;
         Status::Continue
     }
-}
-
-#[tokio::test]
-async fn main() {
-    let mut server: Server = Server::default();
-    let request_config: RequestConfig = RequestConfig::low_security();
-    server.request_config(request_config);
-    server.task_panic::<TaskPanicHook>();
-    server.request_error::<RequestErrorHook>();
-    server.request_middleware::<RequestMiddleware>();
-    server.request_middleware::<UpgradeHook>();
-    server.route::<GroupChat>("/{group_name}");
-    server.route::<PrivateChat>("/{my_name}/{your_name}");
-    let server_control_hook_1: ServerControlHook = server.run().await.unwrap_or_default();
-    let server_control_hook_2: ServerControlHook = server_control_hook_1.clone();
-    spawn(async move {
-        sleep(Duration::from_secs(60)).await;
-        server_control_hook_2.shutdown().await;
-    });
-    server_control_hook_1.wait().await;
 }
