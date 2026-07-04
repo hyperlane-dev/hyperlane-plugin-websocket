@@ -327,10 +327,10 @@ where
             context,
             capacity: DEFAULT_BROADCAST_SENDER_CAPACITY,
             broadcast_type: BroadcastType::default(),
-            connected_hook: default_server_hook_handler(),
-            request_hook: default_server_hook_handler(),
-            sended_hook: default_server_hook_handler(),
-            closed_hook: default_server_hook_handler(),
+            connected_hook: Hook::default_handler(),
+            request_hook: Hook::default_handler(),
+            sended_hook: Hook::default_handler(),
+            closed_hook: Hook::default_handler(),
         }
     }
 }
@@ -448,7 +448,7 @@ where
     where
         S: ServerHook,
     {
-        self.connected_hook = server_hook_factory::<S>();
+        self.connected_hook = Hook::factory::<S>();
         self
     }
 
@@ -481,7 +481,7 @@ where
     where
         S: ServerHook,
     {
-        self.request_hook = server_hook_factory::<S>();
+        self.request_hook = Hook::factory::<S>();
         self
     }
 
@@ -514,7 +514,7 @@ where
     where
         S: ServerHook,
     {
-        self.sended_hook = server_hook_factory::<S>();
+        self.sended_hook = Hook::factory::<S>();
         self
     }
 
@@ -547,7 +547,7 @@ where
     where
         S: ServerHook,
     {
-        self.closed_hook = server_hook_factory::<S>();
+        self.closed_hook = Hook::factory::<S>();
         self
     }
 
