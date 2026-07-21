@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 impl ServerHook for TaskPanicHook {
     async fn new(_: &mut Stream, ctx: &mut Context) -> Self {

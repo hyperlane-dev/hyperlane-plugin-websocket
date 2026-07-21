@@ -1,4 +1,4 @@
-use crate::*;
+use super::*;
 
 /// Allows `String` to be used as a broadcast identifier.
 impl BroadcastTypeTrait for String {}

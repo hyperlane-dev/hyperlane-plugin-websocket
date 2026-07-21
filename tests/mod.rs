@@ -1,6 +1,6 @@
 mod websocket;
 
-use {hyperlane_plugin_websocket::*, websocket::*};
+use hyperlane_plugin_websocket::*;
 
 use std::sync::OnceLock;
 
